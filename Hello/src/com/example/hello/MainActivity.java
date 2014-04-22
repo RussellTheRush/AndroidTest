@@ -14,6 +14,7 @@ import android.view.Menu;
 public class MainActivity extends Activity {
 	//	commit by xiaoluo third
 	//  commit by laotan third
+	//  commit by ziqi 
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
