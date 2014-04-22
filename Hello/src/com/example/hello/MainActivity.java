@@ -7,16 +7,13 @@ import android.view.Menu;
  * 
  * @Description:TODO
 
- * @author:caican
+ * @author:who
 
  * @time:2014年4月22日 下午2:56:01
  */
 public class MainActivity extends Activity {
-	//	commit by xiaoluo second
-	//  commit by laotan
-	//  commit by who ? you guess? test
-	//  commit by i don't know who you r
-	//  you see
+	//	commit by xiaoluo third
+
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
