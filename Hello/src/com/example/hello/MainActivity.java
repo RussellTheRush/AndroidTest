@@ -14,7 +14,8 @@ import android.view.Menu;
 public class MainActivity extends Activity {
 	//	commit by xiaoluo
 	//  commit by laotan
-	//  commit by who ? you guess? test
+	//  commit by who ? you guess?
+	//  commit by i don't know who you r
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
