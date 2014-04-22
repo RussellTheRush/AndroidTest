@@ -3,7 +3,14 @@ package com.example.hello;
 import android.os.Bundle;
 import android.app.Activity;
 import android.view.Menu;
+/**
+ * 
+ * @Description:TODO
 
+ * @author:caican
+
+ * @time:2014年4月22日 下午2:56:01
+ */
 public class MainActivity extends Activity {
 	//	commit by xiaoluo
 	//  commit by laotan
