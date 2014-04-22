@@ -15,6 +15,7 @@ public class MainActivity extends Activity {
 	//	commit by xiaoluo third
 	//  commit by laotan third
 	//  commit by ziqi 
+	//  commit by russell
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
