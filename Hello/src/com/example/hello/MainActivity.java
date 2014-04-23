@@ -25,6 +25,7 @@ public class MainActivity extends Activity {
 		setContentView(R.layout.activity_main);
 		Toast.makeText(this, "Hello", 0);
         //AAAA
+        //BBBB
 	}
 
 	@Override
