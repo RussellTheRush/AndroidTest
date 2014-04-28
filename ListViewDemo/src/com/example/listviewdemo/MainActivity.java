@@ -1,6 +1,10 @@
 package com.example.listviewdemo;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import android.support.v4.app.Fragment;
 import android.app.Activity;
@@ -10,11 +14,18 @@ import android.database.DataSetObserver;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
+import android.os.Handler;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.View.OnClickListener;
 import android.view.ViewGroup;
+import android.widget.Adapter;
+import android.widget.ArrayAdapter;
+import android.widget.BaseAdapter;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.ListAdapter;
 import android.widget.ListView;
@@ -26,111 +37,82 @@ public class MainActivity extends Activity {
 
 	private Bitmap bitmap;
 	private Context mContext;
-	private PPListView lv;
+	private PPList lv;
+	
+	private List<String> mList = new ArrayList<String>();
+	
+	private Handler mHandler = new Handler();
+	
+	private static int mID;
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
-		lv = (PPListView)findViewById(R.id.lv);
+		lv = (PPList)findViewById(R.id.lv);
 		mContext = this;
-		lv.setOnRefreshListener(new PPListView.OnRefreshListener() {
+		lv.setOnRemoveItemListener(new PPList.OnRemoveItemListener() {
+			
+			@Override
+			public void removeItem(int position) {
+				mList.remove(position);
+				adapter.notifyDataSetChanged();
+			}
+		});
+		lv.setOnRefreshListener(new PPList.OnRefreshListener() {
 			
 			@Override
 			public void onRefresh() {
-				try {
-					Thread.sleep(3000);
-					lv.onRefreshSuccess();
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-				}
+				new Thread(new Runnable() {
+					public void run() {
+						try {
+							Thread.sleep(1000);
+							
+							mHandler.post(new Runnable() {
+
+								@Override
+								public void run() {
+									for (int i=0; i<30; i++) {
+										mList.add("origin item: " + (mID++));
+									}
+									lv.onRefreshSuccess();
+									adapter.notifyDataSetChanged();
+								}
+							});
+						} catch (InterruptedException e) {
+							e.printStackTrace();
+						}
+					}
+				}).start();
 			}
 			
 			@Override
 			public void onLoadMore() {
+				new Thread(new Runnable() {
+					public void run() {
+						try {
+							Thread.sleep(500);
+							
+							
+							mHandler.post(new Runnable() {
+								
+								@Override
+								public void run() {
+									for (int i=0; i<30; i++) {
+										mList.add("item: " + (mID++));
+									}
+									lv.onRefreshSuccess();
+									adapter.notifyDataSetChanged();
+								}
+							});
+							
+						} catch (InterruptedException e) {
+							e.printStackTrace();
+						}
+					}
+				}).start();
 			}
 		});
-		lv.setAdapter(new ListAdapter() {
-			
-			@Override
-			public void unregisterDataSetObserver(DataSetObserver observer) {
-				// TODO Auto-generated method stub
-
-			}
-			
-			@Override
-			public void registerDataSetObserver(DataSetObserver observer) {
-				// TODO Auto-generated method stub
-
-			}
-			
-			@Override
-			public boolean isEmpty() {
-				// TODO Auto-generated method stub
-				return false;
-			}
-			
-			@Override
-			public boolean hasStableIds() {
-				// TODO Auto-generated method stub
-				return false;
-			}
-			
-			@Override
-			public int getViewTypeCount() {
-				// TODO Auto-generated method stub
-				return 1;
-			}
-			
-			@Override
-			public View getView(int position, View convertView, ViewGroup parent) {
-				//�Ż�ListView  
-				if(convertView==null){
-					convertView=LayoutInflater.from(mContext).inflate(R.layout.list_item, null);  
-					ImageView iv = (ImageView)convertView.findViewById(R.id.lv_item_img);
-					TextView tv = (TextView)convertView.findViewById(R.id.lv_item_tv);
-					loadBitmap();
-					iv.setImageBitmap(bitmap);
-					tv.setText("AAAAA");
-				}
-				return convertView;
-			}
-			
-			@Override
-			public int getCount() {
-				// TODO Auto-generated method stub
-				return 100;
-			}
-
-			@Override
-			public Object getItem(int position) {
-				// TODO Auto-generated method stub
-				return null;
-			}
-
-			@Override
-			public long getItemId(int position) {
-				// TODO Auto-generated method stub
-				return 0;
-			}
-
-			@Override
-			public int getItemViewType(int position) {
-				// TODO Auto-generated method stub
-				return 0;
-			}
-
-			@Override
-			public boolean areAllItemsEnabled() {
-				// TODO Auto-generated method stub
-				return false;
-			}
-
-			@Override
-			public boolean isEnabled(int position) {
-				// TODO Auto-generated method stub
-				return false;
-			}  
-		});
+		lv.setAdapter(adapter);
 	}
 
 
@@ -166,4 +148,50 @@ public class MainActivity extends Activity {
 			}
 		}
 	}
+	
+	private BaseAdapter adapter = new BaseAdapter() {
+		
+		@Override
+		public View getView(final int position, View convertView, ViewGroup parent) {
+			if(convertView==null){
+				convertView=LayoutInflater.from(mContext).inflate(R.layout.list_item, null);
+			}
+			ImageView iv = (ImageView)convertView.findViewById(R.id.lv_item_img);
+			TextView tv = (TextView)convertView.findViewById(R.id.lv_item_tv);
+			loadBitmap();
+			iv.setImageBitmap(bitmap);
+			tv.setText(mList.get(position));
+			Log.w("RRR", "position: " + position);
+			Button btn = (Button)convertView.findViewById(R.id.btn);
+			
+			btn.setOnClickListener(new OnClickListener() {
+				
+				@Override
+				public void onClick(View v) {
+					lv.removeItem(position);
+				}
+			});
+			
+			return convertView;
+		}
+
+		@Override
+		public int getCount() {
+			// TODO Auto-generated method stub
+			return mList.size();
+		}
+
+		@Override
+		public Object getItem(int position) {
+			// TODO Auto-generated method stub
+			return null;
+		}
+
+		@Override
+		public long getItemId(int position) {
+			// TODO Auto-generated method stub
+			return 0;
+		}
+		
+	};
 }

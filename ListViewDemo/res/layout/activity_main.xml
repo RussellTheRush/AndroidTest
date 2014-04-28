@@ -5,8 +5,8 @@
     android:layout_height="match_parent"
     tools:context="com.example.demo.MainActivity"
     tools:ignore="MergeRootFrame" >
-
-    <com.example.listviewdemo.PPListView
+    
+    <com.example.listviewdemo.PPList
         android:id="@+id/lv"
         android:layout_width="match_parent"
         android:layout_height="wrap_content" />
