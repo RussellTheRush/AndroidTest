@@ -24,7 +24,7 @@ import android.widget.LinearLayout;
 import android.widget.ListView;
 
 
-class PPList extends LinearLayout {  
+public class PPList extends LinearLayout {  
 	private PPListView mListView;
 	private View mFirstRefreshView;
 	private boolean mIsFirstRefreshing = true;
