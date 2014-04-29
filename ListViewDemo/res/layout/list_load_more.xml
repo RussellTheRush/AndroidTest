@@ -2,12 +2,13 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="horizontal" >
+    android:orientation="vertical" >
     
     <TextView 
     	android:layout_width="match_parent"
     	android:layout_height="90dp"
-    	android:id="@+id/lv_refresh_tv"
-    	android:padding="30dp"/>
-
+    	android:id="@+id/lv_footer_tv"
+    	android:padding="30dp"
+    	android:text="加载更多 "/>
+    
 </LinearLayout>
