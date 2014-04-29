@@ -12,10 +12,8 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.ViewPropertyAnimator;
 import android.widget.AbsListView;
 import android.widget.AbsListView.OnScrollListener;  
-import android.widget.Adapter;
 import android.widget.BaseAdapter;
 import android.widget.TextView;
 import android.view.ViewGroup;
@@ -26,15 +24,10 @@ import android.widget.LinearLayout;
 import android.widget.ListView;
 
 
-class PPList extends LinearLayout {
-
-	private OnRefreshListener mRefreshListener;
-	private OnRemoveItemListener mRemoveListener;
-	private LayoutInflater mInflater;  
-	private boolean bIsFirstRefreshing = true;
-	private boolean bIsRefreshable;  
+class PPList extends LinearLayout {  
 	private PPListView mListView;
 	private View mFirstRefreshView;
+	private boolean mIsFirstRefreshing = true;
 
 	public interface OnRefreshListener {  
 		public void onRefresh();  
@@ -45,13 +38,8 @@ class PPList extends LinearLayout {
 		public void removeItem(int position);  
 	}
 
-	public void setOnRemoveItemListener(OnRemoveItemListener l) {
-		mRemoveListener = l;
-	}
-
 	public PPList(Context context, AttributeSet attrs) {
 		super(context, attrs);
-		mInflater = LayoutInflater.from(context);
 		mFirstRefreshView = inflate(context, R.layout.first_refresh, null);
 		mFirstRefreshView.setVisibility(VISIBLE);
 		mListView = new PPListView(context, attrs);
@@ -63,22 +51,26 @@ class PPList extends LinearLayout {
 	public void setLoadMoreEnable(boolean bLoadMoreEnable) {
 		mListView.setLoadMoreEnable(bLoadMoreEnable);
 	}
+	
+	public void setRefreshEnable(boolean bRefreshEnable) {
+		mListView.setRefreshEnable(bRefreshEnable);
+	}
 
 	public void setAdapter(BaseAdapter adapter) {
 		mListView.setAdapter(adapter);
 	}
+	
+	public void setOnRemoveItemListener(OnRemoveItemListener l) {
+		mListView.setOnRemoveItemListener(l);
+	}
 
 	public void setOnRefreshListener(OnRefreshListener refreshListener) {  
-		this.mRefreshListener = refreshListener;  
-		bIsRefreshable = true;  
-		if (refreshListener != null) {
-			refreshListener.onRefresh();
-		}
+		mListView.setOnRefreshListener(refreshListener);
 	}  
 
 	public void onRefreshSuccess() {  
-		if (bIsFirstRefreshing) {
-			bIsFirstRefreshing = false;
+		if (mIsFirstRefreshing) {
+			mIsFirstRefreshing = false;
 			mFirstRefreshView.setVisibility(GONE);
 			mListView.setVisibility(VISIBLE);
 			mFirstRefreshView = null;
@@ -87,9 +79,7 @@ class PPList extends LinearLayout {
 	} 
 
 	public void removeItem(int position) {
-		if (mRemoveListener != null) {
-			mListView.removeItem(position);
-		}
+		mListView.removeItem(position);
 	}
 
 	private class PPListView extends ListView implements OnScrollListener{
@@ -108,21 +98,34 @@ class PPList extends LinearLayout {
 		private int mHeaderContentHeight;  
 		private TextView mTipView;
 
-		private boolean bIsBack;
-		private boolean bLoadMoreEnable = true;
+		private boolean mIsBack;
+		private boolean mLoadMoreEnable = true;
 		private int mStartY;  
 		private int mState;  
 		private boolean mIsRecored;  
+		private OnRefreshListener mRefreshListener;
+		private OnRemoveItemListener mRemoveListener;
+		private LayoutInflater mInflater;  
+		private boolean mIsRefreshable;
+		private boolean mRefreshEnable;
 
 		private Handler mHandler = new Handler();
 
-		public PPListView(Context context, AttributeSet attrs) {
+		private PPListView(Context context, AttributeSet attrs) {
 			super(context, attrs);
 			init(context);
 		}
 
-		public void setLoadMoreEnable(boolean bLoadMoreEnable) {
-			this.bLoadMoreEnable = bLoadMoreEnable;
+		public void setRefreshEnable(boolean bRefreshEnable) {
+			mRefreshEnable = bRefreshEnable;
+		}
+
+		private void setOnRemoveItemListener(OnRemoveItemListener l) {
+			mRemoveListener = l;
+		}
+
+		private void setLoadMoreEnable(boolean bLoadMoreEnable) {
+			this.mLoadMoreEnable = bLoadMoreEnable;
 			if (!bLoadMoreEnable && mFooterView != null) {
 				removeFooterView(mFooterView);
 				mFooterView = null;
@@ -130,31 +133,41 @@ class PPList extends LinearLayout {
 				mFooterView = (LinearLayout)mInflater.inflate(R.layout.list_load_more, null);
 				addFooterView(mFooterView);
 			}
+			invalidate();
 		}
 
 		private void init(Context context) {
-
+			mInflater = LayoutInflater.from(context);
+			mState = DONE;  
+			mIsRefreshable = false;
+			setOnScrollListener(this);
+			setLoadMoreEnable(true);
+			setRefreshEnable(false);
 			mHeaderView = (LinearLayout) mInflater.inflate(R.layout.list_refresh, null);
 			mTipView = (TextView) mHeaderView.findViewById(R.id.lv_refresh_tv);
 
 			measureView(mHeaderView);
 			mHeaderContentHeight = mHeaderView.getMeasuredHeight();  
 			mHeaderView.setPadding(0, -1 * mHeaderContentHeight, 0, 0);  
-			mHeaderView.invalidate(); 
 			addHeaderView(mHeaderView, null, false);
-			mState = DONE;  
-			bIsRefreshable = false;
-			setOnScrollListener(this);
-			setLoadMoreEnable(true);
+			invalidate();
 		}
+
+		private void setOnRefreshListener(OnRefreshListener refreshListener) {  
+			this.mRefreshListener = refreshListener;  
+			mIsRefreshable = true;  
+			if (refreshListener != null) {
+				refreshListener.onRefresh();
+			}
+		}  
 
 		@Override  
 		public void onScroll(AbsListView view, int firstVisibleItem,  
 				int visibleItemCount, int totalItemCount) {  
 			if (firstVisibleItem == 0  && mRefreshListener != null) {  
-				bIsRefreshable = true;  
+				mIsRefreshable = true;  
 			} else {
-				bIsRefreshable = false;  
+				mIsRefreshable = false;  
 			}
 		} 
 
@@ -169,7 +182,7 @@ class PPList extends LinearLayout {
 
 		public void onRefreshSuccess() {  
 			mState = DONE;   
-			mTipView.setText("最近更新:" + new Date().toLocaleString());  
+			//mTipView.setText("最近更新:" + new Date().toLocaleString());  
 			changeHeaderViewByState();  
 			if (getLastVisiblePosition() == getCount() - 1 || getLastVisiblePosition() == -1) {
 				onLvLoadMore();
@@ -181,8 +194,10 @@ class PPList extends LinearLayout {
 			if (mState == ITEM_DELETING) {
 				return true;
 			}
-
-			if (bIsRefreshable) {  
+			if (!mRefreshEnable) {
+				return super.onTouchEvent(ev);
+			}
+			if (mIsRefreshable) {  
 				switch (ev.getAction()) {  
 				case MotionEvent.ACTION_DOWN:  
 					if (!mIsRecored) {  
@@ -203,7 +218,7 @@ class PPList extends LinearLayout {
 						}  
 					}  
 					mIsRecored = false;  
-					bIsBack = false;  
+					mIsBack = false;  
 
 					break;  
 
@@ -230,7 +245,7 @@ class PPList extends LinearLayout {
 							setSelection(0);  
 							if ((tempY - mStartY) / RATIO >= mHeaderContentHeight) {
 								mState = RELEASE_To_REFRESH;  
-								bIsBack = true;  
+								mIsBack = true;  
 								changeHeaderViewByState();  
 							}  
 							else if (tempY - mStartY <= 0) { 
@@ -265,7 +280,7 @@ class PPList extends LinearLayout {
 		}
 
 		private void removeItem(final int position) {
-			if (mState == ITEM_DELETING) {
+			if (mState == ITEM_DELETING || mRemoveListener == null) {
 				return;
 			}
 			if (position >= 0 && position < getCount()) {
@@ -333,7 +348,7 @@ class PPList extends LinearLayout {
 		}  
 
 		private void onLvLoadMore() {  
-			if (bLoadMoreEnable) {
+			if (mLoadMoreEnable) {
 				mState = LOADING_MORE;
 
 				if (mRefreshListener != null) {  
