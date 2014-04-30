@@ -4,5 +4,6 @@
     <string name="app_name">ListViewDemo</string>
     <string name="action_settings">Settings</string>
     <string name="hello_world">Hello world!</string>
-
+	<string name="text_delete">删除</string>
+	<string name="text_image">图片</string>
 </resources>

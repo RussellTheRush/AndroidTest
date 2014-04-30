@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <color name="blue">#ff0000dd</color>
+
+    <drawable name="pp_w_browser_color">#00000000</drawable>
+    <drawable name="pp_list_color1">#444444</drawable>
+    <drawable name="pp_list_color2">#94979c</drawable>
+    <drawable name="pp_rank_color">#3a475e</drawable>
+    <drawable name="pp_transprent">#00000000</drawable>
+    <drawable name="pp_wp_menu_press">#1A000000</drawable>
+    <drawable name="pp_drawable_blackish_green">#FF00AA00</drawable>
+
+    <!-- 以下是shu检查更新的资源文件 -->
+    <color name="dialog_btn_pressed">#FFE0E0E0</color>
+    <color name="dialog_btn_normal">#FFF7F7F7</color>
+
+    <!-- 程序中所有的字体颜色 -->
+    <color name="pp_font_color_rating_one_two">#FF669933</color>
+    <color name="pp_font_color_rating_three_four">#FF6699FF</color>
+    <color name="pp_font_color_rating_five">#FF9966CC</color>
+    <color name="pp_font_color_grey_six">#FF666666</color>
+    <color name="pp_font_color_grey_three">#FF333333</color>
+    <color name="pp_font_color_grey_three_shallow">#FFB2B2B2</color>
+
+
+   	<color name="pp_font_color_title">#FF333333</color>
+   	<color name="pp_font_color_second_title">#FF333333</color>
+   	<color name="pp_font_color_grey">#FF999999</color>
+   	<color name="pp_font_color_normal">#FF333333</color>
+	<color name="pp_font_color_white">#FFFFFFFF</color>
+   	<color name="pp_font_color_blackish_green">#FF00B800</color>
+   	<color name="pp_font_color_safe_bad">#FFF98F2E</color>
+   	<color name="pp_font_color_safe_good">#FF66AA00</color>
+   	<color name="pp_font_color_green">#FF00B800</color>
+   	<color name="pp_font_color_blue">#FF007AFF</color>
+   	<color name="pp_font_color_safe_bad_low">#FFFFBA00</color>
+   	<color name="pp_font_color_safe_bad_high">#FFF20000</color>
+   	<color name="pp_font_color_blue_shoallow">#FFB2D7FF</color>
+   	<!-- 程序中所有的背景颜色 -->
+   	<color name="pp_background_color_blackish_blue_green">#FF00B800</color>
+   	<color name="pp_background_color_black">#FF000000</color>
+
+    <color name="pp_background_color_blackish_green_shallow">#FF00AA00</color>
+    <color name="pp_background_color_normal">#FF444444</color>
+    <color name="pp_background_color_grey">#FFFCFCFC</color> <!-- E7E7E7 -->
+    <color name="pp_background_color_white">#FFFFFFFF</color>
+    <color name="pp_background_color_half_white">#F2FFFFFF</color>
+    <color name="pp_background_color_FAFAFA">#FFFAFAFA</color>
+    <color name="pp_background_color_image_press_shallow">#55000000</color>
+    <color name="pp_background_color">#FFF7F7F7</color>
+    <color name="pp_background_color_count_tip">#FFF20000</color>
+
+    <color name="pp_background_color_rating_grey">#FFE9E9E9</color>
+    <color name="pp_background_color_rating_foreground">#FF999999</color>
+    <color name="pp_background_color_login_tip">#FFFFFCF0</color>
+
+    <color name="pp_rectangle_color_normal">#50000000</color>
+    <color name="pp_rectangle_color_selector">#FFFFFFFF</color>
+    <color name="pp_line_top_title">#FFCCCCCC</color>
+    <color name="pp_line_content">#FFDADADA</color>
+    <color name="pp_line_vertical">#FFD8D8D8</color>
+    <color name="pp_line_dash">#FFE3E3E3</color>
+    <color name="pp_line_frame">#FFE0E0E0</color>
+
+   	<color name="pp_line_login_tip">#FFF2DCAE</color>
+   	
+    <drawable name="pp_list_pressed_color">#FFE9E9E9</drawable>
+
+    <color name="pp_color_btn_app_other_disable">#FF909090</color>
+    <!-- 程序中按钮背景颜色 -->
+    <color name="pp_color_btn_app_other_normal">#FF00B800</color>
+    <color name="pp_color_btn_app_update_normal">#FFFF8400</color>
+    <color name="pp_color_btn_app_open_normal">#FF3E9AFF</color>
+    <color name="pp_color_btn_blue_normal">#FF3E9AFF</color>
+    <color name="pp_color_btn_app_uninstall_normal">#FFE30000</color>
+    <color name="pp_color_btn_app_delete_normal">#FFE30000</color>
+    <color name="pp_color_btn_app_ing_normal">#FF909090</color>
+    <color name="pp_color_btn_app_other_press">#FF00AA00</color>
+    <color name="pp_color_btn_app_update_press">#FFF07C00</color>
+    <color name="pp_color_btn_app_open_press">#FF388DEB</color>
+    <color name="pp_color_btn_blue_press">#FF388DEB</color>
+    <color name="pp_color_btn_app_uninstall_press">#FFCE0000</color>
+    <color name="pp_color_btn_app_delete_press">#FFCE0000</color>
+    <color name="pp_color_btn_app_ing_press">#FFADADAD</color>
+    <color name="pp_color_btn_app_progress_bg">#FFC0C0C0</color>
+    <color name="pp_color_btn_app_progress">#FF1AD11A</color>
+    <color name="pp_dot_focused">#00b800</color>
+    <color name="pp_dot_normal">#e0e0e0</color>
+    <color name="pp_rank_orig">#FFFF6C00</color>
+    <color name="pp_rank_ltorig">#FFFFA800</color>
+    <color name="pp_rank_grey">#FFABABAB</color>
+    <color name="pp_stoke_grey">#FFBFBFBF</color>
+    
+	
+</resources>

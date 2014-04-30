@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle" >
+
+
+    <solid android:color="@color/pp_color_btn_app_other_press" />
+
+    <size
+        android:height="27dp"
+        android:width="50dp" />
+
+    <corners
+        android:bottomLeftRadius="1dp"
+        android:bottomRightRadius="1dp"
+        android:topLeftRadius="1dp"
+        android:topRightRadius="1dp" />
+
+</shape>

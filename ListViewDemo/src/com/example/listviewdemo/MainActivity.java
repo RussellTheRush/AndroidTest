@@ -65,7 +65,7 @@ public class MainActivity extends Activity {
 				new Thread(new Runnable() {
 					public void run() {
 						try {
-							Thread.sleep(1000);
+							Thread.sleep(3000);
 							
 							mHandler.post(new Runnable() {
 
@@ -90,7 +90,7 @@ public class MainActivity extends Activity {
 				new Thread(new Runnable() {
 					public void run() {
 						try {
-							Thread.sleep(500);
+							Thread.sleep(3000);
 							
 							
 							mHandler.post(new Runnable() {
@@ -113,6 +113,7 @@ public class MainActivity extends Activity {
 			}
 		});
 		lv.setAdapter(adapter);
+		lv.setPreloadFactor(3);
 	}
 
 
@@ -156,13 +157,13 @@ public class MainActivity extends Activity {
 			if(convertView==null){
 				convertView=LayoutInflater.from(mContext).inflate(R.layout.list_item, null);
 			}
-			ImageView iv = (ImageView)convertView.findViewById(R.id.lv_item_img);
-			TextView tv = (TextView)convertView.findViewById(R.id.lv_item_tv);
+			ImageView iv = (ImageView)convertView.findViewById(R.id.pp_app_img);
+			TextView tv = (TextView)convertView.findViewById(R.id.pp_app_name);
 			loadBitmap();
 			iv.setImageBitmap(bitmap);
 			tv.setText(mList.get(position));
 			Log.w("RRR", "position: " + position);
-			Button btn = (Button)convertView.findViewById(R.id.btn);
+			Button btn = (Button)convertView.findViewById(R.id.pp_d_del_btn);
 			
 			btn.setOnClickListener(new OnClickListener() {
 				

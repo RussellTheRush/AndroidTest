@@ -23,7 +23,6 @@ import android.view.animation.TranslateAnimation;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 
-
 public class PPList extends LinearLayout {  
 	private PPListView mListView;
 	private View mFirstRefreshView;
@@ -81,6 +80,10 @@ public class PPList extends LinearLayout {
 	public void removeItem(int position) {
 		mListView.removeItem(position);
 	}
+	
+	public void setPreloadFactor(int preloadFactor) {
+		mListView.setPreloadFactor(preloadFactor);
+	}
 
 	private class PPListView extends ListView implements OnScrollListener{
 
@@ -108,12 +111,17 @@ public class PPList extends LinearLayout {
 		private LayoutInflater mInflater;  
 		private boolean mIsRefreshable;
 		private boolean mRefreshEnable;
+		private int mPreloadFactor = -1;
 
 		private Handler mHandler = new Handler();
 
 		private PPListView(Context context, AttributeSet attrs) {
 			super(context, attrs);
 			init(context);
+		}
+
+		public void setPreloadFactor(int preloadFactor) {
+			mPreloadFactor = preloadFactor;
 		}
 
 		public void setRefreshEnable(boolean bRefreshEnable) {
@@ -141,8 +149,8 @@ public class PPList extends LinearLayout {
 			mState = DONE;  
 			mIsRefreshable = false;
 			setOnScrollListener(this);
-			setLoadMoreEnable(true);
-			setRefreshEnable(false);
+			setLoadMoreEnable(false);
+			setRefreshEnable(true);
 			mHeaderView = (LinearLayout) mInflater.inflate(R.layout.list_refresh, null);
 			mTipView = (TextView) mHeaderView.findViewById(R.id.lv_refresh_tv);
 
@@ -169,6 +177,10 @@ public class PPList extends LinearLayout {
 			} else {
 				mIsRefreshable = false;  
 			}
+			if (mState == DONE && mPreloadFactor != -1 && mLoadMoreEnable
+					&& getLastVisiblePosition() +1 >= getCount() - mPreloadFactor) {
+				onLvLoadMore();
+			}
 		} 
 
 		@Override
@@ -182,7 +194,7 @@ public class PPList extends LinearLayout {
 
 		public void onRefreshSuccess() {  
 			mState = DONE;   
-			//mTipView.setText("最近更新:" + new Date().toLocaleString());  
+			mTipView.setText("最近更新:" + new Date().toLocaleString());  
 			changeHeaderViewByState();  
 			if (getLastVisiblePosition() == getCount() - 1 || getLastVisiblePosition() == -1) {
 				onLvLoadMore();
@@ -268,7 +280,6 @@ public class PPList extends LinearLayout {
 							mHeaderView.setPadding(0, (tempY - mStartY) / RATIO  
 									- mHeaderContentHeight, 0, 0);  
 						}  
-
 					}  
 					break;  
 
