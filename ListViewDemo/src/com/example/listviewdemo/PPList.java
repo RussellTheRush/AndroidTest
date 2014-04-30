@@ -1,41 +1,40 @@
 package com.example.listviewdemo;
 
-import java.util.Date;
-
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.ValueAnimator;
+import android.animation.ValueAnimator.AnimatorUpdateListener;
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.os.Handler;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
-import android.widget.AbsListView;
-import android.widget.AbsListView.OnScrollListener;  
-import android.widget.BaseAdapter;
-import android.widget.TextView;
 import android.view.ViewGroup;
 import android.view.animation.Animation;
 import android.view.animation.Animation.AnimationListener;
 import android.view.animation.TranslateAnimation;
+import android.widget.AbsListView;
+import android.widget.AbsListView.OnScrollListener;
+import android.widget.BaseAdapter;
 import android.widget.LinearLayout;
 import android.widget.ListView;
+import android.widget.TextView;
 
-
-public class PPList extends LinearLayout {  
+public class PPList extends LinearLayout {
 	private PPListView mListView;
 	private View mFirstRefreshView;
 	private boolean mIsFirstRefreshing = true;
 
-	public interface OnRefreshListener {  
-		public void onRefresh();  
+	public interface OnRefreshListener {
+		public void onRefresh();
+
 		public void onLoadMore();
 	}
 
-	public interface OnRemoveItemListener {  
-		public void removeItem(int position);  
+	public interface OnRemoveItemListener {
+		public void removeItem(int position);
 	}
 
 	public PPList(Context context, AttributeSet attrs) {
@@ -51,7 +50,7 @@ public class PPList extends LinearLayout {
 	public void setLoadMoreEnable(boolean bLoadMoreEnable) {
 		mListView.setLoadMoreEnable(bLoadMoreEnable);
 	}
-	
+
 	public void setRefreshEnable(boolean bRefreshEnable) {
 		mListView.setRefreshEnable(bRefreshEnable);
 	}
@@ -59,16 +58,16 @@ public class PPList extends LinearLayout {
 	public void setAdapter(BaseAdapter adapter) {
 		mListView.setAdapter(adapter);
 	}
-	
+
 	public void setOnRemoveItemListener(OnRemoveItemListener l) {
 		mListView.setOnRemoveItemListener(l);
 	}
 
-	public void setOnRefreshListener(OnRefreshListener refreshListener) {  
+	public void setOnRefreshListener(OnRefreshListener refreshListener) {
 		mListView.setOnRefreshListener(refreshListener);
-	}  
+	}
 
-	public void onRefreshSuccess() {  
+	public void onRefreshSuccess() {
 		if (mIsFirstRefreshing) {
 			mIsFirstRefreshing = false;
 			mFirstRefreshView.setVisibility(GONE);
@@ -76,36 +75,36 @@ public class PPList extends LinearLayout {
 			mFirstRefreshView = null;
 		}
 		mListView.onRefreshSuccess();
-	} 
+	}
 
 	public void removeItem(int position) {
 		mListView.removeItem(position);
 	}
 
-	private class PPListView extends ListView implements OnScrollListener{
+	private class PPListView extends ListView implements OnScrollListener {
 
 		private final static int RELEASE_To_REFRESH = 0;
 		private final static int PULL_To_REFRESH = 1;
 		private final static int REFRESHING = 2;
-		private final static int DONE = 3;   
+		private final static int DONE = 3;
 		private final static int LOADING_MORE = 4;
 		private final static int ITEM_DELETING = 5;
 
-		private final static int RATIO = 3;  
+		private final static int RATIO = 3;
 
-		private LinearLayout mHeaderView; 
-		private LinearLayout mFooterView; 
-		private int mHeaderContentHeight;  
+		private LinearLayout mHeaderView;
+		private LinearLayout mFooterView;
+		private int mHeaderContentHeight;
 		private TextView mTipView;
 
 		private boolean mIsBack;
 		private boolean mLoadMoreEnable = true;
-		private int mStartY;  
-		private int mState;  
-		private boolean mIsRecored;  
+		private int mStartY;
+		private int mState;
+		private boolean mIsRecored;
 		private OnRefreshListener mRefreshListener;
 		private OnRemoveItemListener mRemoveListener;
-		private LayoutInflater mInflater;  
+		private LayoutInflater mInflater;
 		private boolean mIsRefreshable;
 		private boolean mRefreshEnable;
 
@@ -130,7 +129,8 @@ public class PPList extends LinearLayout {
 				removeFooterView(mFooterView);
 				mFooterView = null;
 			} else if (bLoadMoreEnable && mFooterView == null) {
-				mFooterView = (LinearLayout)mInflater.inflate(R.layout.list_load_more, null);
+				mFooterView = (LinearLayout) mInflater.inflate(
+						R.layout.list_load_more, null);
 				addFooterView(mFooterView);
 			}
 			invalidate();
@@ -138,56 +138,58 @@ public class PPList extends LinearLayout {
 
 		private void init(Context context) {
 			mInflater = LayoutInflater.from(context);
-			mState = DONE;  
+			mState = DONE;
 			mIsRefreshable = false;
 			setOnScrollListener(this);
 			setLoadMoreEnable(true);
-			setRefreshEnable(false);
-			mHeaderView = (LinearLayout) mInflater.inflate(R.layout.list_refresh, null);
+			setRefreshEnable(true);
+			mHeaderView = (LinearLayout) mInflater.inflate(
+					R.layout.list_refresh, null);
 			mTipView = (TextView) mHeaderView.findViewById(R.id.lv_refresh_tv);
 
 			measureView(mHeaderView);
-			mHeaderContentHeight = mHeaderView.getMeasuredHeight();  
-			mHeaderView.setPadding(0, -1 * mHeaderContentHeight, 0, 0);  
+			mHeaderContentHeight = mHeaderView.getMeasuredHeight();
+			mHeaderView.setPadding(0, -1 * mHeaderContentHeight, 0, 0);
 			addHeaderView(mHeaderView, null, false);
 			invalidate();
 		}
 
-		private void setOnRefreshListener(OnRefreshListener refreshListener) {  
-			this.mRefreshListener = refreshListener;  
-			mIsRefreshable = true;  
+		private void setOnRefreshListener(OnRefreshListener refreshListener) {
+			this.mRefreshListener = refreshListener;
+			mIsRefreshable = true;
 			if (refreshListener != null) {
 				refreshListener.onRefresh();
 			}
-		}  
+		}
 
-		@Override  
-		public void onScroll(AbsListView view, int firstVisibleItem,  
-				int visibleItemCount, int totalItemCount) {  
-			if (firstVisibleItem == 0  && mRefreshListener != null) {  
-				mIsRefreshable = true;  
+		@Override
+		public void onScroll(AbsListView view, int firstVisibleItem,
+				int visibleItemCount, int totalItemCount) {
+			if (firstVisibleItem == 0 && mRefreshListener != null) {
+				mIsRefreshable = true;
 			} else {
-				mIsRefreshable = false;  
+				mIsRefreshable = false;
 			}
-		} 
+		}
 
 		@Override
 		public void onScrollStateChanged(AbsListView view, int scrollState) {
-			if (scrollState == OnScrollListener.SCROLL_STATE_IDLE  
+			if (scrollState == OnScrollListener.SCROLL_STATE_IDLE
 					&& mState == DONE
 					&& getLastVisiblePosition() == getCount() - 1) {
 				onLvLoadMore();
 			}
 		}
 
-		public void onRefreshSuccess() {  
-			mState = DONE;   
-			//mTipView.setText("最近更新:" + new Date().toLocaleString());  
-			changeHeaderViewByState();  
-			if (getLastVisiblePosition() == getCount() - 1 || getLastVisiblePosition() == -1) {
+		public void onRefreshSuccess() {
+			mState = DONE;
+			// mTipView.setText("最近更新:" + new Date().toLocaleString());
+			changeHeaderViewByState();
+			if (getLastVisiblePosition() == getCount() - 1
+					|| getLastVisiblePosition() == -1) {
 				onLvLoadMore();
 			}
-		} 
+		}
 
 		@Override
 		public boolean onTouchEvent(MotionEvent ev) {
@@ -197,85 +199,82 @@ public class PPList extends LinearLayout {
 			if (!mRefreshEnable) {
 				return super.onTouchEvent(ev);
 			}
-			if (mIsRefreshable) {  
-				switch (ev.getAction()) {  
-				case MotionEvent.ACTION_DOWN:  
-					if (!mIsRecored) {  
-						mIsRecored = true;  
+			if (mIsRefreshable) {
+				switch (ev.getAction()) {
+				case MotionEvent.ACTION_DOWN:
+					if (!mIsRecored) {
+						mIsRecored = true;
 						mStartY = (int) ev.getY();
-					}  
-					break;  
-				case MotionEvent.ACTION_UP:  
-					if (mState != REFRESHING ) {  
-						if (mState == PULL_To_REFRESH) {  
-							mState = DONE;  
-							changeHeaderViewByState();  
-						}  
-						if (mState == RELEASE_To_REFRESH) {  
-							mState = REFRESHING;  
-							changeHeaderViewByState();  
-							onLvRefresh();  
-						}  
-					}  
-					mIsRecored = false;  
-					mIsBack = false;  
+					}
+					break;
+				case MotionEvent.ACTION_UP:
+					if (mState != REFRESHING) {
+						if (mState == PULL_To_REFRESH) {
+							mState = DONE;
+							changeHeaderViewByState();
+						}
+						if (mState == RELEASE_To_REFRESH) {
+							mState = REFRESHING;
+							changeHeaderViewByState();
+							onLvRefresh();
+						}
+					}
+					mIsRecored = false;
+					mIsBack = false;
 
-					break;  
+					break;
 
-				case MotionEvent.ACTION_MOVE:  
-					int tempY = (int) ev.getY();  
-					if (!mIsRecored) {  
-						mIsRecored = true;  
-						mStartY = tempY;  
-					}  
-					if (mState != REFRESHING && mIsRecored) {  
-						if (mState == RELEASE_To_REFRESH) {  
-							setSelection(0);  
-							if (((tempY - mStartY) / RATIO < mHeaderContentHeight
-									&& (tempY - mStartY) > 0)) {  
-								mState = PULL_To_REFRESH;  
-								changeHeaderViewByState();  
-							}  
-							else if (tempY - mStartY <= 0) {
-								mState = DONE;  
-								changeHeaderViewByState();  
-							}  
-						}  
-						if (mState == PULL_To_REFRESH) {  
-							setSelection(0);  
+				case MotionEvent.ACTION_MOVE:
+					int tempY = (int) ev.getY();
+					if (!mIsRecored) {
+						mIsRecored = true;
+						mStartY = tempY;
+					}
+					if (mState != REFRESHING && mIsRecored) {
+						if (mState == RELEASE_To_REFRESH) {
+							setSelection(0);
+							if (((tempY - mStartY) / RATIO < mHeaderContentHeight && (tempY - mStartY) > 0)) {
+								mState = PULL_To_REFRESH;
+								changeHeaderViewByState();
+							} else if (tempY - mStartY <= 0) {
+								mState = DONE;
+								changeHeaderViewByState();
+							}
+						}
+						if (mState == PULL_To_REFRESH) {
+							setSelection(0);
 							if ((tempY - mStartY) / RATIO >= mHeaderContentHeight) {
-								mState = RELEASE_To_REFRESH;  
-								mIsBack = true;  
-								changeHeaderViewByState();  
-							}  
-							else if (tempY - mStartY <= 0) { 
-								mState = DONE;  
-								changeHeaderViewByState();  
-							}  
-						}  
-						if (mState == DONE) {  
-							if (tempY - mStartY > 0) {  
-								mState = PULL_To_REFRESH;  
-								changeHeaderViewByState();  
-							}  
-						}  
-						if (mState == PULL_To_REFRESH) {  
-							mHeaderView.setPadding(0, -1 * mHeaderContentHeight  
-									+ (tempY - mStartY) / RATIO, 0, 0);  
+								mState = RELEASE_To_REFRESH;
+								mIsBack = true;
+								changeHeaderViewByState();
+							} else if (tempY - mStartY <= 0) {
+								mState = DONE;
+								changeHeaderViewByState();
+							}
+						}
+						if (mState == DONE) {
+							if (tempY - mStartY > 0) {
+								mState = PULL_To_REFRESH;
+								changeHeaderViewByState();
+							}
+						}
+						if (mState == PULL_To_REFRESH) {
+							mHeaderView.setPadding(0, -1 * mHeaderContentHeight
+									+ (tempY - mStartY) / RATIO, 0, 0);
 
-						}  
-						if (mState == RELEASE_To_REFRESH) {  
-							mHeaderView.setPadding(0, (tempY - mStartY) / RATIO  
-									- mHeaderContentHeight, 0, 0);  
-						}  
+						}
+						if (mState == RELEASE_To_REFRESH) {
+							mHeaderView.setPadding(0, (tempY - mStartY) / RATIO
+									- mHeaderContentHeight, 0, 0);
+						}
 
-					}  
-					break;  
+					}
+					break;
 
-				default:  
-					break;  
-				}  
-			}  
+				default:
+					break;
+				}
+			}
 			return super.onTouchEvent(ev);
 		}
 
@@ -285,13 +284,15 @@ public class PPList extends LinearLayout {
 			}
 			if (position >= 0 && position < getCount()) {
 				mState = ITEM_DELETING;
-				TranslateAnimation an = new TranslateAnimation(Animation.RELATIVE_TO_PARENT, 0f, 
+				TranslateAnimation an = new TranslateAnimation(
+						Animation.RELATIVE_TO_PARENT, 0f,
 						Animation.RELATIVE_TO_PARENT, 1f,
 						Animation.RELATIVE_TO_PARENT, 0f,
 						Animation.RELATIVE_TO_PARENT, 0f);
 				an.setDuration(500);
 
-				final View view = getChildAt(position + 1 - getFirstVisiblePosition());
+				final View view = getChildAt(position + 1
+						- getFirstVisiblePosition());
 
 				an.setAnimationListener(new AnimationListener() {
 
@@ -303,99 +304,150 @@ public class PPList extends LinearLayout {
 					public void onAnimationRepeat(Animation animation) {
 					}
 
+					@SuppressLint("NewApi")
 					@Override
 					public void onAnimationEnd(Animation animation) {
 						view.clearAnimation();
 						view.setAlpha(0);
-						shrinkItem(view ,position);
+						shrinkItem(view, position);
 					}
 				});
 				view.startAnimation(an);
 			}
 		}
 
+		@SuppressLint("NewApi")
 		private void shrinkItem(final View view, final int position) {
-			final ViewGroup.LayoutParams lp = view.getLayoutParams();//获取item的布局参数  
-			final int originalHeight = view.getHeight();//item的高度  
-			ValueAnimator animator = ValueAnimator.ofInt(originalHeight, 0).setDuration(200);
-			animator.addListener(new AnimatorListenerAdapter() {  
-				@Override  
-				public void onAnimationEnd(Animator animation) {  
-					//这段代码很重要，因为我们并没有将item从ListView中移除，而是将item的高度设置为0  
-					//所以我们在动画执行完毕之后将item设置回来  
-					lp.height = originalHeight;  
-					view.setLayoutParams(lp);  
+			final ViewGroup.LayoutParams lp = view.getLayoutParams();// 获取item的布局参数
+			final int originalHeight = view.getHeight();// item的高度
+			ValueAnimator animator = ValueAnimator.ofInt(originalHeight, 0)
+					.setDuration(200);
+			animator.addListener(new AnimatorListenerAdapter() {
+				@Override
+				public void onAnimationEnd(Animator animation) {
+					// 这段代码很重要，因为我们并没有将item从ListView中移除，而是将item的高度设置为0
+					// 所以我们在动画执行完毕之后将item设置回来
+					lp.height = originalHeight;
+					view.setLayoutParams(lp);
 					view.setAlpha(1);
 					mRemoveListener.removeItem(position);
 					mState = DONE;
-				}  
-			});  
-			animator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {  
-				@Override  
-				public void onAnimationUpdate(ValueAnimator valueAnimator) {  
-					//这段代码的效果是ListView删除某item之后，其他的item向上滑动的效果  
-					lp.height = (Integer) valueAnimator.getAnimatedValue();  
-					view.setLayoutParams(lp);  
-				}  
-			});  
-			animator.start();  
+				}
+			});
+			animator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+				@Override
+				public void onAnimationUpdate(ValueAnimator valueAnimator) {
+					// 这段代码的效果是ListView删除某item之后，其他的item向上滑动的效果
+					lp.height = (Integer) valueAnimator.getAnimatedValue();
+					view.setLayoutParams(lp);
+				}
+			});
+			animator.start();
 		}
 
-		private void onLvRefresh() {  
-			if (mRefreshListener != null) {  
-				mRefreshListener.onRefresh();  
+		private void onLvRefresh() {
+			if (mRefreshListener != null) {
+				mRefreshListener.onRefresh();
 			}
-		}  
+		}
 
-		private void onLvLoadMore() {  
+		private void onLvLoadMore() {
 			if (mLoadMoreEnable) {
 				mState = LOADING_MORE;
 
-				if (mRefreshListener != null) {  
-					mRefreshListener.onLoadMore();  
+				if (mRefreshListener != null) {
+					mRefreshListener.onLoadMore();
 				}
 			}
-		}  
+		}
 
-		private void changeHeaderViewByState() {  
-			switch (mState) {  
-			case RELEASE_To_REFRESH:  
-				mTipView.setText("松开刷新");  
-				break;  
-			case PULL_To_REFRESH:  
-				mTipView.setText("下拉刷新");  
-				break;  
+		@SuppressLint("NewApi")
+		private void changeHeaderViewByState() {
+			switch (mState) {
+			case RELEASE_To_REFRESH:
+				mTipView.setText("松开刷新");
+				break;
+			case PULL_To_REFRESH:
+				mTipView.setText("下拉刷新");
+				break;
 
-			case REFRESHING:  
-				mHeaderView.setPadding(0, 0, 0, 0);  
-				mTipView.setText("正在刷新...");  
-				break;  
-			case DONE:  
-				mHeaderView.setPadding(0, -1 * mHeaderContentHeight, 0, 0);  
-				mTipView.setText("下拉刷新");  
-				break;  
-			}  
+			case REFRESHING:
+				if (mHeaderView.getPaddingTop() > 0) {
+					ValueAnimator animator = ValueAnimator.ofInt(
+							mHeaderView.getPaddingTop(), 0).setDuration(342);
+					animator.addUpdateListener(new AnimatorUpdateListener() {
+						@Override
+						public void onAnimationUpdate(ValueAnimator animation) {
+							mHeaderView.setPadding(0,
+									(Integer) animation.getAnimatedValue(), 0,
+									0);
+						}
+					});
+					animator.addListener(new AnimatorListenerAdapter() {
+						@Override
+						public void onAnimationEnd(Animator animation) {
+							// 显示正在刷新
+							mHeaderView.setPadding(0, 0, 0, 0);
+							mTipView.setText("正在刷新");
+							clearAnimation();
+						}
+					});
+
+					animator.start();
+				}
+				break;
+			case DONE:
+				if (mHeaderView.getPaddingTop() != -1 * mHeaderContentHeight) {
+					final ViewGroup.LayoutParams lp2 = mHeaderView
+							.getLayoutParams();
+					int height2 = mHeaderView.getHeight();
+					ValueAnimator animator2 = ValueAnimator.ofInt(
+							mHeaderView.getPaddingTop(),
+							-1 * mHeaderContentHeight).setDuration(342);
+					System.out.println(height2 + "dd" + mHeaderContentHeight);
+					animator2.addUpdateListener(new AnimatorUpdateListener() {
+						@Override
+						public void onAnimationUpdate(ValueAnimator animation) {
+							mHeaderView.setPadding(0,
+									(Integer) animation.getAnimatedValue(), 0,
+									0);
+						}
+					});
+					animator2.addListener(new AnimatorListenerAdapter() {
+						@Override
+						public void onAnimationEnd(Animator animation) {
+
+							mHeaderView.setPadding(0,
+									-1 * mHeaderContentHeight, 0, 0);
+							clearAnimation();
+							mTipView.setText("下拉刷新");
+						}
+					});
+					animator2.start();
+				}
+				break;
+			}
 		}
 
 		private void measureView(View child) {
 			ViewGroup.LayoutParams params = child.getLayoutParams();
-			if (params == null) {  
-				params = new ViewGroup.LayoutParams(  
-						ViewGroup.LayoutParams.MATCH_PARENT,  
-						ViewGroup.LayoutParams.WRAP_CONTENT);  
-			}  
-			int childWidthSpec = ViewGroup.getChildMeasureSpec(0, 0 + 0,  
+			if (params == null) {
+				params = new ViewGroup.LayoutParams(
+						ViewGroup.LayoutParams.MATCH_PARENT,
+						ViewGroup.LayoutParams.WRAP_CONTENT);
+			}
+			int childWidthSpec = ViewGroup.getChildMeasureSpec(0, 0 + 0,
 					params.width);
 
-			int lpHeight = params.height;  
-			int childHeightSpec;  
-			if (lpHeight > 0) {  
-				childHeightSpec = MeasureSpec.makeMeasureSpec(lpHeight,  
-						MeasureSpec.EXACTLY);  
-			} else {  
-				childHeightSpec = MeasureSpec.makeMeasureSpec(0,  
-						MeasureSpec.UNSPECIFIED);  
-			}  
+			int lpHeight = params.height;
+			int childHeightSpec;
+			if (lpHeight > 0) {
+				childHeightSpec = MeasureSpec.makeMeasureSpec(lpHeight,
+						MeasureSpec.EXACTLY);
+			} else {
+				childHeightSpec = MeasureSpec.makeMeasureSpec(0,
+						MeasureSpec.UNSPECIFIED);
+			}
 			child.measure(childWidthSpec, childHeightSpec);
 		}
 	}
