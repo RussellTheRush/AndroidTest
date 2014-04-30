@@ -22,11 +22,8 @@ import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
 
-<<<<<<< HEAD
 public class PPList extends LinearLayout {  
-=======
-public class PPList extends LinearLayout {
->>>>>>> branch 'master' of ssh://ppandroid@10.4.195.12/AndroidTest
+
 	private PPListView mListView;
 	private View mFirstRefreshView;
 	private boolean mIsFirstRefreshing = true;
@@ -154,16 +151,10 @@ public class PPList extends LinearLayout {
 			mState = DONE;
 			mIsRefreshable = false;
 			setOnScrollListener(this);
-<<<<<<< HEAD
 			setLoadMoreEnable(false);
 			setRefreshEnable(true);
 			mHeaderView = (LinearLayout) mInflater.inflate(R.layout.list_refresh, null);
-=======
-			setLoadMoreEnable(true);
-			setRefreshEnable(true);
-			mHeaderView = (LinearLayout) mInflater.inflate(
-					R.layout.list_refresh, null);
->>>>>>> branch 'master' of ssh://ppandroid@10.4.195.12/AndroidTest
+
 			mTipView = (TextView) mHeaderView.findViewById(R.id.lv_refresh_tv);
 
 			measureView(mHeaderView);
@@ -189,15 +180,12 @@ public class PPList extends LinearLayout {
 			} else {
 				mIsRefreshable = false;
 			}
-<<<<<<< HEAD
 			if (mState == DONE && mPreloadFactor != -1 && mLoadMoreEnable
 					&& getLastVisiblePosition() +1 >= getCount() - mPreloadFactor) {
 				onLvLoadMore();
 			}
 		} 
-=======
-		}
->>>>>>> branch 'master' of ssh://ppandroid@10.4.195.12/AndroidTest
+
 
 		@Override
 		public void onScrollStateChanged(AbsListView view, int scrollState) {
@@ -290,7 +278,6 @@ public class PPList extends LinearLayout {
 							mHeaderView.setPadding(0, -1 * mHeaderContentHeight
 									+ (tempY - mStartY) / RATIO, 0, 0);
 
-<<<<<<< HEAD
 						}  
 						if (mState == RELEASE_To_REFRESH) {  
 							mHeaderView.setPadding(0, (tempY - mStartY) / RATIO  
@@ -298,16 +285,6 @@ public class PPList extends LinearLayout {
 						}  
 					}  
 					break;  
-=======
-						}
-						if (mState == RELEASE_To_REFRESH) {
-							mHeaderView.setPadding(0, (tempY - mStartY) / RATIO
-									- mHeaderContentHeight, 0, 0);
-						}
-
-					}
-					break;
->>>>>>> branch 'master' of ssh://ppandroid@10.4.195.12/AndroidTest
 
 				default:
 					break;
