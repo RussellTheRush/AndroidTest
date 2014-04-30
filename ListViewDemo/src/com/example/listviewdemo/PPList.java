@@ -1,10 +1,11 @@
 package com.example.listviewdemo;
 
+import java.util.Date;
+
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.ValueAnimator;
 import android.animation.ValueAnimator.AnimatorUpdateListener;
-import android.annotation.SuppressLint;
 import android.content.Context;
 import android.os.Handler;
 import android.util.AttributeSet;
@@ -14,15 +15,17 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.Animation;
 import android.view.animation.Animation.AnimationListener;
+import android.view.animation.RotateAnimation;
 import android.view.animation.TranslateAnimation;
 import android.widget.AbsListView;
 import android.widget.AbsListView.OnScrollListener;
 import android.widget.BaseAdapter;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
 
-public class PPList extends LinearLayout {  
+public class PPList extends LinearLayout {
 
 	private PPListView mListView;
 	private View mFirstRefreshView;
@@ -81,7 +84,7 @@ public class PPList extends LinearLayout {
 	public void removeItem(int position) {
 		mListView.removeItem(position);
 	}
-	
+
 	public void setPreloadFactor(int preloadFactor) {
 		mListView.setPreloadFactor(preloadFactor);
 	}
@@ -101,6 +104,12 @@ public class PPList extends LinearLayout {
 		private LinearLayout mFooterView;
 		private int mHeaderContentHeight;
 		private TextView mTipView;
+		private TextView mLastInfoView;
+		private ImageView mArrowView;
+		private ImageView mProgressBar;
+		private Animation mArrowViewAnimationTo;
+		private Animation mArrowViewAnimationBack;
+		private Animation mLoadingAnimation;
 
 		private boolean mIsBack;
 		private boolean mLoadMoreEnable = true;
@@ -153,15 +162,48 @@ public class PPList extends LinearLayout {
 			setOnScrollListener(this);
 			setLoadMoreEnable(false);
 			setRefreshEnable(true);
-			mHeaderView = (LinearLayout) mInflater.inflate(R.layout.list_refresh, null);
+			mHeaderView = (LinearLayout) mInflater.inflate(
+					R.layout.list_refresh, null);
 
 			mTipView = (TextView) mHeaderView.findViewById(R.id.lv_refresh_tv);
-
+			mLastInfoView = (TextView) mHeaderView
+					.findViewById(R.id.lv_refresh_last_info_tv);
+			mArrowView = (ImageView) mHeaderView
+					.findViewById(R.id.lv_head_arrow_view);
+			mArrowView.setVisibility(VISIBLE);
+			mProgressBar = (ImageView) mHeaderView
+					.findViewById(R.id.lv_head_progressBar);
+			mLastInfoView.setText("最后更新时间" + new Date().toLocaleString());
 			measureView(mHeaderView);
 			mHeaderContentHeight = mHeaderView.getMeasuredHeight();
 			mHeaderView.setPadding(0, -1 * mHeaderContentHeight, 0, 0);
 			addHeaderView(mHeaderView, null, false);
 			invalidate();
+			initAnimation();
+		}
+
+		/**
+		 * 初始化箭头旋转动画,加载动画
+		 */
+		private void initAnimation() {
+			mArrowViewAnimationTo = new RotateAnimation(0f, -180f,
+					Animation.RELATIVE_TO_SELF, 0.5f,
+					Animation.RELATIVE_TO_SELF, 0.5f);
+			mArrowViewAnimationTo.setDuration(346);
+			mArrowViewAnimationTo.setFillAfter(true);
+			mArrowViewAnimationBack = new RotateAnimation(-180f, 0f,
+					Animation.RELATIVE_TO_SELF, 0.5f,
+					Animation.RELATIVE_TO_SELF, 0.5f);
+			mArrowViewAnimationBack.setDuration(346);
+			mArrowViewAnimationBack.setFillAfter(true);
+
+			// 加载转圈动画
+			mLoadingAnimation = new RotateAnimation(0f, 360f,
+					Animation.RELATIVE_TO_SELF, 0.5f,
+					Animation.RELATIVE_TO_SELF, 0.5f);
+			mLoadingAnimation.setDuration(850);
+			mLoadingAnimation.setRepeatCount(Animation.INFINITE);
+			mArrowViewAnimationBack.setFillAfter(true);
 		}
 
 		private void setOnRefreshListener(OnRefreshListener refreshListener) {
@@ -180,12 +222,14 @@ public class PPList extends LinearLayout {
 			} else {
 				mIsRefreshable = false;
 			}
-			if (mState == DONE && mPreloadFactor != -1 && mLoadMoreEnable
-					&& getLastVisiblePosition() +1 >= getCount() - mPreloadFactor) {
+			if (mState == DONE
+					&& mPreloadFactor != -1
+					&& mLoadMoreEnable
+					&& getLastVisiblePosition() + 1 >= getCount()
+							- mPreloadFactor) {
 				onLvLoadMore();
 			}
-		} 
-
+		}
 
 		@Override
 		public void onScrollStateChanged(AbsListView view, int scrollState) {
@@ -196,10 +240,9 @@ public class PPList extends LinearLayout {
 			}
 		}
 
-
 		public void onRefreshSuccess() {
 			mState = DONE;
-			// mTipView.setText("最近更新:" + new Date().toLocaleString());
+			mLastInfoView.setText("最后更新时间:" + new Date().toLocaleString());
 			changeHeaderViewByState();
 			if (getLastVisiblePosition() == getCount() - 1
 					|| getLastVisiblePosition() == -1) {
@@ -278,13 +321,13 @@ public class PPList extends LinearLayout {
 							mHeaderView.setPadding(0, -1 * mHeaderContentHeight
 									+ (tempY - mStartY) / RATIO, 0, 0);
 
-						}  
-						if (mState == RELEASE_To_REFRESH) {  
-							mHeaderView.setPadding(0, (tempY - mStartY) / RATIO  
-									- mHeaderContentHeight, 0, 0);  
-						}  
-					}  
-					break;  
+						}
+						if (mState == RELEASE_To_REFRESH) {
+							mHeaderView.setPadding(0, (tempY - mStartY) / RATIO
+									- mHeaderContentHeight, 0, 0);
+						}
+					}
+					break;
 
 				default:
 					break;
@@ -319,7 +362,6 @@ public class PPList extends LinearLayout {
 					public void onAnimationRepeat(Animation animation) {
 					}
 
-					@SuppressLint("NewApi")
 					@Override
 					public void onAnimationEnd(Animation animation) {
 						view.clearAnimation();
@@ -331,7 +373,6 @@ public class PPList extends LinearLayout {
 			}
 		}
 
-		@SuppressLint("NewApi")
 		private void shrinkItem(final View view, final int position) {
 			final ViewGroup.LayoutParams lp = view.getLayoutParams();// 获取item的布局参数
 			final int originalHeight = view.getHeight();// item的高度
@@ -376,17 +417,36 @@ public class PPList extends LinearLayout {
 			}
 		}
 
-		@SuppressLint("NewApi")
 		private void changeHeaderViewByState() {
 			switch (mState) {
 			case RELEASE_To_REFRESH:
+				mProgressBar.setVisibility(View.GONE);
+				mProgressBar.clearAnimation();
+				mArrowView.setVisibility(View.VISIBLE);
+				mArrowView.clearAnimation();
+				mArrowView.startAnimation(mArrowViewAnimationTo);
 				mTipView.setText("松开刷新");
 				break;
 			case PULL_To_REFRESH:
-				mTipView.setText("下拉刷新");
+				mProgressBar.setVisibility(GONE);
+				mProgressBar.clearAnimation();
+				mArrowView.setVisibility(View.VISIBLE);
+				mArrowView.clearAnimation();
+				if (mIsBack) {
+					mIsBack = false;
+					mArrowView.startAnimation(mArrowViewAnimationBack);
+					mTipView.setText("取消页面更新");
+				} else {
+					mTipView.setText("下拉刷新");
+				}
 				break;
 
 			case REFRESHING:
+				mArrowView.setVisibility(View.GONE);
+				mArrowView.clearAnimation();
+				mProgressBar.setVisibility(View.VISIBLE);
+				mProgressBar.startAnimation(mLoadingAnimation);
+				mTipView.setText("正在刷新");
 				if (mHeaderView.getPaddingTop() > 0) {
 					ValueAnimator animator = ValueAnimator.ofInt(
 							mHeaderView.getPaddingTop(), 0).setDuration(342);
@@ -403,15 +463,16 @@ public class PPList extends LinearLayout {
 						public void onAnimationEnd(Animator animation) {
 							// 显示正在刷新
 							mHeaderView.setPadding(0, 0, 0, 0);
-							mTipView.setText("正在刷新");
+
 							clearAnimation();
 						}
 					});
-
 					animator.start();
 				}
 				break;
 			case DONE:
+				mArrowView.clearAnimation();
+				mArrowView.setImageResource(R.drawable.pp_go_icon);
 				if (mHeaderView.getPaddingTop() != -1 * mHeaderContentHeight) {
 					final ViewGroup.LayoutParams lp2 = mHeaderView
 							.getLayoutParams();
@@ -440,6 +501,7 @@ public class PPList extends LinearLayout {
 					});
 					animator2.start();
 				}
+
 				break;
 			}
 		}
@@ -465,5 +527,6 @@ public class PPList extends LinearLayout {
 			}
 			child.measure(childWidthSpec, childHeightSpec);
 		}
+
 	}
 }
