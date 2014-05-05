@@ -1,5 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
-
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="fill_parent"
     android:layout_height="wrap_content"
@@ -12,8 +11,7 @@
         android:layout_marginBottom="5dp"
         android:layout_marginLeft="5dp"
         android:layout_marginRight="5dp"
-        android:background="@drawable/pp_list_item_selector"
-         >
+        android:background="@drawable/pp_list_item_selector" >
 
         <RelativeLayout
             android:id="@+id/pp_d_control_tool"
@@ -94,7 +92,6 @@
             android:layout_toRightOf="@id/pp_app_img"
             android:focusable="false"
             android:gravity="bottom"
-            android:text="2.5M "
             android:textColor="@color/pp_font_color_grey"
             android:textSize="@dimen/pp_font_size_small" />
 
@@ -109,9 +106,8 @@
             android:focusable="false"
             android:gravity="bottom"
             android:singleLine="true"
-            android:text="ver:1.0.0"
             android:textColor="@color/pp_font_color_grey"
-            android:textSize="@dimen/pp_font_size_small" />
+            android:textSize="@dimen/pp_font_size_small" />     
     </RelativeLayout>
 
 </LinearLayout>

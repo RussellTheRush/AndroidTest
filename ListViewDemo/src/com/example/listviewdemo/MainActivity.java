@@ -23,6 +23,8 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.widget.Adapter;
+import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ArrayAdapter;
 import android.widget.BaseAdapter;
 import android.widget.Button;
@@ -114,6 +116,16 @@ public class MainActivity extends Activity {
 		});
 		lv.setAdapter(adapter);
 		lv.setPreloadFactor(3);
+		lv.setOnItemClickListener(new OnItemClickListener() {
+
+			@Override
+			public void onItemClick(AdapterView<?> parent, View view,
+					int position, long id) {
+				
+				Log.w("RRR", "onItemClick");
+				lv.removeItem(position);
+			}
+		});
 	}
 
 
@@ -155,14 +167,13 @@ public class MainActivity extends Activity {
 		@Override
 		public View getView(final int position, View convertView, ViewGroup parent) {
 			if(convertView==null){
-				convertView=LayoutInflater.from(mContext).inflate(R.layout.list_item, null);
+				convertView=LayoutInflater.from(mContext).inflate(R.layout.list_item, parent, false);
 			}
-			ImageView iv = (ImageView)convertView.findViewById(R.id.pp_app_img);
-			TextView tv = (TextView)convertView.findViewById(R.id.pp_app_name);
-			loadBitmap();
-			iv.setImageBitmap(bitmap);
-			tv.setText(mList.get(position));
-			Log.w("RRR", "position: " + position);
+//			ImageView iv = (ImageView)convertView.findViewById(R.id.pp_app_img);
+//			TextView tv = (TextView)convertView.findViewById(R.id.pp_app_name);
+//			loadBitmap();
+//			iv.setImageBitmap(bitmap);
+//			tv.setText(mList.get(position));
 			Button btn = (Button)convertView.findViewById(R.id.pp_d_del_btn);
 			
 			btn.setOnClickListener(new OnClickListener() {

@@ -9,6 +9,7 @@ import android.animation.ValueAnimator.AnimatorUpdateListener;
 import android.content.Context;
 import android.os.Handler;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -16,9 +17,11 @@ import android.view.ViewGroup;
 import android.view.animation.Animation;
 import android.view.animation.Animation.AnimationListener;
 import android.view.animation.RotateAnimation;
+import android.view.animation.Transformation;
 import android.view.animation.TranslateAnimation;
 import android.widget.AbsListView;
 import android.widget.AbsListView.OnScrollListener;
+import android.widget.AdapterView.OnItemClickListener;
 import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -69,6 +72,10 @@ public class PPList extends LinearLayout {
 
 	public void setOnRefreshListener(OnRefreshListener refreshListener) {
 		mListView.setOnRefreshListener(refreshListener);
+	}
+
+	public void setOnItemClickListener(OnItemClickListener listener) {
+		mListView.setOnItemClickListener(listener);
 	}
 
 	public void onRefreshSuccess() {
@@ -215,6 +222,27 @@ public class PPList extends LinearLayout {
 		}
 
 		@Override
+		protected void measureChildren(int widthMeasureSpec,
+				int heightMeasureSpec) {
+			Log.w("RRR", "measureChildren");
+			super.measureChildren(widthMeasureSpec, heightMeasureSpec);
+		}
+
+		@Override
+		protected void measureChild(View child, int parentWidthMeasureSpec,
+				int parentHeightMeasureSpec) {
+			Log.w("RRR", "measureChild");
+			super.measureChild(child, parentWidthMeasureSpec,
+					parentHeightMeasureSpec);
+		}
+
+		@Override
+		protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+			Log.w("RRR", "onMeasure");
+			super.onMeasure(widthMeasureSpec, heightMeasureSpec);
+		}
+
+		@Override
 		public void onScroll(AbsListView view, int firstVisibleItem,
 				int visibleItemCount, int totalItemCount) {
 			if (firstVisibleItem == 0 && mRefreshListener != null) {
@@ -347,7 +375,7 @@ public class PPList extends LinearLayout {
 						Animation.RELATIVE_TO_PARENT, 1f,
 						Animation.RELATIVE_TO_PARENT, 0f,
 						Animation.RELATIVE_TO_PARENT, 0f);
-				an.setDuration(500);
+				an.setDuration(300);
 
 				final View view = getChildAt(position + 1
 						- getFirstVisiblePosition());
@@ -376,13 +404,21 @@ public class PPList extends LinearLayout {
 		private void shrinkItem(final View view, final int position) {
 			final ViewGroup.LayoutParams lp = view.getLayoutParams();// 获取item的布局参数
 			final int originalHeight = view.getHeight();// item的高度
-			ValueAnimator animator = ValueAnimator.ofInt(originalHeight, 0)
-					.setDuration(200);
-			animator.addListener(new AnimatorListenerAdapter() {
+			ShrinkAnimation animation = new ShrinkAnimation(view,
+					originalHeight, 0);
+			animation.setDuration(200);
+
+			animation.setAnimationListener(new AnimationListener() {
 				@Override
-				public void onAnimationEnd(Animator animation) {
-					// 这段代码很重要，因为我们并没有将item从ListView中移除，而是将item的高度设置为0
-					// 所以我们在动画执行完毕之后将item设置回来
+				public void onAnimationStart(Animation animation) {
+				}
+
+				@Override
+				public void onAnimationRepeat(Animation animation) {
+				}
+
+				@Override
+				public void onAnimationEnd(Animation animation) {
 					lp.height = originalHeight;
 					view.setLayoutParams(lp);
 					view.setAlpha(1);
@@ -390,15 +426,37 @@ public class PPList extends LinearLayout {
 					mState = DONE;
 				}
 			});
-			animator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
-				@Override
-				public void onAnimationUpdate(ValueAnimator valueAnimator) {
-					// 这段代码的效果是ListView删除某item之后，其他的item向上滑动的效果
-					lp.height = (Integer) valueAnimator.getAnimatedValue();
-					view.setLayoutParams(lp);
-				}
-			});
-			animator.start();
+			view.setAnimation(animation);
+			animation.start();
+
+			// final ViewGroup.LayoutParams lp = view.getLayoutParams();//
+			// 获取item的布局参数
+			// final int originalHeight = view.getHeight();// item的高度
+			// ValueAnimator animator = ValueAnimator.ofInt(originalHeight, 0)
+			// .setDuration(200);
+			// animator.addListener(new AnimatorListenerAdapter() {
+			// @Override
+			// public void onAnimationEnd(Animator animation) {
+			// // 这段代码很重要，因为我们并没有将item从ListView中移除，而是将item的高度设置为0
+			// // 所以我们在动画执行完毕之后将item设置回来
+			// lp.height = originalHeight;
+			// view.setLayoutParams(lp);
+			// view.setAlpha(1);
+			// mRemoveListener.removeItem(position);
+			// mState = DONE;
+			// }
+			// });
+			// animator.addUpdateListener(new
+			// ValueAnimator.AnimatorUpdateListener() {
+			// @Override
+			// public void onAnimationUpdate(ValueAnimator valueAnimator) {
+			// // 这段代码的效果是ListView删除某item之后，其他的item向上滑动的效果
+			// lp.height = (Integer) valueAnimator.getAnimatedValue();
+			// view.setLayoutParams(lp);
+			//
+			// }
+			// });
+			// animator.start();
 		}
 
 		private void onLvRefresh() {
@@ -526,6 +584,54 @@ public class PPList extends LinearLayout {
 						MeasureSpec.UNSPECIFIED);
 			}
 			child.measure(childWidthSpec, childHeightSpec);
+		}
+	}
+
+	public class ShrinkAnimation extends Animation {
+		private View mView;
+		private ViewGroup.LayoutParams mLP;
+		private AnimationListener mListener;
+		private int mFrom;
+		private int mTo;
+		private boolean mStart = false;
+		private boolean mEnd = false;
+
+		public ShrinkAnimation(View view, int from, int to) {
+			mView = view;
+			mFrom = from;
+			mTo = to;
+			mLP = mView.getLayoutParams();
+			mLP.height = from;
+		}
+
+		@Override
+		protected void applyTransformation(float interpolatedTime,
+				Transformation t) {
+			if ((interpolatedTime == 0f) && !mStart) {
+				mStart = true;
+				if (mListener != null) {
+					mListener.onAnimationStart(this);
+				}
+			}
+
+			if (mStart && !mEnd) {
+				mLP.height = mFrom + (int) (interpolatedTime * (mTo - mFrom));
+				mView.requestLayout();
+			}
+
+			if ((interpolatedTime != 1.0f) || mEnd) {
+				return;
+			}
+
+			mEnd = true;
+			if (mListener != null) {
+				mListener.onAnimationEnd(this);
+			}
+		}
+
+		@Override
+		public void setAnimationListener(AnimationListener listener) {
+			mListener = listener;
 		}
 
 	}
