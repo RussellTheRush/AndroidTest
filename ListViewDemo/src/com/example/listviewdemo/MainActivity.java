@@ -39,36 +39,29 @@ public class MainActivity extends Activity {
 
 	private Bitmap bitmap;
 	private Context mContext;
-	private PPList lv;
-	
+	private PPListView lv;
+
 	private List<String> mList = new ArrayList<String>();
-	
+
 	private Handler mHandler = new Handler();
-	
+
 	private static int mID;
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
-		lv = (PPList)findViewById(R.id.lv);
+		lv = (PPListView)findViewById(R.id.pp_listview);
 		mContext = this;
-		lv.setOnRemoveItemListener(new PPList.OnRemoveItemListener() {
-			
-			@Override
-			public void removeItem(int position) {
-				mList.remove(position);
-				adapter.notifyDataSetChanged();
-			}
-		});
-		lv.setOnRefreshListener(new PPList.OnRefreshListener() {
-			
+
+		lv.setOnRefreshListener(new PPListView.OnRefreshListener() {
+
 			@Override
 			public void onRefresh() {
 				new Thread(new Runnable() {
 					public void run() {
 						try {
 							Thread.sleep(3000);
-							
+
 							mHandler.post(new Runnable() {
 
 								@Override
@@ -86,17 +79,17 @@ public class MainActivity extends Activity {
 					}
 				}).start();
 			}
-			
+
 			@Override
 			public void onLoadMore() {
 				new Thread(new Runnable() {
 					public void run() {
 						try {
 							Thread.sleep(3000);
-							
-							
+
+
 							mHandler.post(new Runnable() {
-								
+
 								@Override
 								public void run() {
 									for (int i=0; i<30; i++) {
@@ -106,7 +99,7 @@ public class MainActivity extends Activity {
 									adapter.notifyDataSetChanged();
 								}
 							});
-							
+
 						} catch (InterruptedException e) {
 							e.printStackTrace();
 						}
@@ -114,18 +107,18 @@ public class MainActivity extends Activity {
 				}).start();
 			}
 		});
+
 		lv.setAdapter(adapter);
 		lv.setPreloadFactor(3);
-		lv.setOnItemClickListener(new OnItemClickListener() {
+		lv.setOnRemoveItemListener(new PPListView.OnRemoveItemListener() {
 
 			@Override
-			public void onItemClick(AdapterView<?> parent, View view,
-					int position, long id) {
-				
-				Log.w("RRR", "onItemClick");
-				lv.removeItem(position);
+			public void removeItem(int position) {
+				mList.remove(position);
+				adapter.notifyDataSetChanged();
 			}
 		});
+
 	}
 
 
@@ -149,8 +142,6 @@ public class MainActivity extends Activity {
 		return super.onOptionsItemSelected(item);
 	}
 
-		
-		
 	private void loadBitmap() {
 		if (bitmap == null) {
 			try {
@@ -161,49 +152,64 @@ public class MainActivity extends Activity {
 			}
 		}
 	}
-	
+
 	private BaseAdapter adapter = new BaseAdapter() {
-		
+
+		public int getItemViewType(int position) {
+			return (position % 10 != 0) ? PPListView.ITEM_TYPE_CONTENT : PPListView.ITEM_TYPE_TITLE;
+		}
+
+		public int getViewTypeCount() {
+			return PPListView.ITEM_TYPE_COUNT;
+		}
+
 		@Override
 		public View getView(final int position, View convertView, ViewGroup parent) {
-			if(convertView==null){
-				convertView=LayoutInflater.from(mContext).inflate(R.layout.list_item, parent, false);
-			}
-//			ImageView iv = (ImageView)convertView.findViewById(R.id.pp_app_img);
-//			TextView tv = (TextView)convertView.findViewById(R.id.pp_app_name);
-//			loadBitmap();
-//			iv.setImageBitmap(bitmap);
-//			tv.setText(mList.get(position));
-			Button btn = (Button)convertView.findViewById(R.id.pp_d_del_btn);
-			
-			btn.setOnClickListener(new OnClickListener() {
-				
-				@Override
-				public void onClick(View v) {
-					lv.removeItem(position);
+
+			if (getItemViewType(position) == PPListView.ITEM_TYPE_TITLE) {
+				if(convertView==null){
+					convertView=LayoutInflater.from(mContext).inflate(R.layout.list_item_title, parent, false);
 				}
-			});
-			
+				TextView tv = (TextView)convertView.findViewById(R.id.tv_item_title);
+				tv.setText("POSITION: " + position);
+				convertView.setTag("AAA, position: " + position);
+			} else {
+				if(convertView==null){
+					convertView=LayoutInflater.from(mContext).inflate(R.layout.list_item, parent, false);
+				}
+				ImageView iv = (ImageView)convertView.findViewById(R.id.pp_app_img);
+				TextView tv = (TextView)convertView.findViewById(R.id.pp_app_name);
+				loadBitmap();
+				iv.setImageBitmap(bitmap);
+				tv.setText(mList.get(position));
+				Button btn = (Button)convertView.findViewById(R.id.pp_d_del_btn);
+				
+				btn.setOnClickListener(new OnClickListener() {
+
+					@Override
+					public void onClick(View v) {
+						lv.removeItem(position);
+					}
+				});
+				convertView.setTag("BBB, position: " + position);
+			}
 			return convertView;
 		}
 
 		@Override
 		public int getCount() {
-			// TODO Auto-generated method stub
 			return mList.size();
 		}
 
 		@Override
 		public Object getItem(int position) {
-			// TODO Auto-generated method stub
 			return null;
 		}
 
 		@Override
 		public long getItemId(int position) {
-			// TODO Auto-generated method stub
 			return 0;
 		}
-		
+
 	};
 }

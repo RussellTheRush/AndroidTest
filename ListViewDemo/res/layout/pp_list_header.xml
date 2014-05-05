@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="horizontal" >
+
+    <RelativeLayout
+        android:layout_width="fill_parent"
+        android:layout_height="60dp" >
+
+        <TextView
+            android:id="@+id/lv_refresh_tv"
+            android:layout_width="wrap_content"
+            android:layout_height="30dp"
+            android:layout_centerHorizontal="true"
+            
+            android:paddingTop="10dp"
+            android:textSize="13sp" />
+
+        <TextView
+            android:id="@+id/lv_refresh_last_info_tv"
+            android:layout_width="wrap_content"
+            android:layout_height="30dp"
+            android:layout_below="@id/lv_refresh_tv"
+            android:layout_centerHorizontal="true"
+            />
+
+        <ImageView
+             android:visibility="gone"
+            android:id="@+id/lv_head_arrow_view"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:layout_centerVertical="true"
+            android:layout_margin="20dip"
+            android:layout_toLeftOf="@id/lv_refresh_tv"
+            android:src="@drawable/pp_go_icon" />
+
+        <ImageView
+            android:visibility="gone"
+            android:id="@+id/lv_head_progressBar"
+            android:layout_width="25dp"
+            android:layout_height="25dp"      
+            android:layout_centerVertical="true"
+         android:layout_margin="20dip"
+            android:layout_toLeftOf="@id/lv_refresh_tv"
+            android:src="@drawable/pp_loading_image" />
+
+        <View
+            android:layout_width="fill_parent"
+            android:layout_height="0.5dp"
+            android:layout_alignParentBottom="true"
+            android:background="#DCDCDC" />
+    </RelativeLayout>
+
+</LinearLayout>
