@@ -10,17 +10,13 @@
         android:layout_height="match_parent"
         android:orientation="vertical"
         android:visibility="visible" >
-
-        <View
-            android:id="@+id/title"
-            android:layout_width="match_parent"
-            android:layout_height="20dp"
-            android:visibility="gone" />
-
+		
         <com.example.listviewdemo.PPListView
             android:id="@+id/pp_listview"
             android:layout_width="match_parent"
             android:layout_height="match_parent" />
+        
+        <include layout="@layout/list_item_title" />
     </RelativeLayout>
 
     <RelativeLayout

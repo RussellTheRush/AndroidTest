@@ -65,9 +65,11 @@ public class PPListView extends ListView implements OnScrollListener {
 	private int mPreloadFactor = -1;
 	private View mTitleView;
 	private RelativeLayout mLayoutSplash;
-	private LinearLayout mLayoutContent;
-	private boolean mTitleChanging = false;
-
+	private RelativeLayout mLayoutContent;
+	private boolean mIsFirstRefreshing = true;
+	private boolean mIsTitleRecording = false;
+	private View mTitleRecordingView;
+	private CharSequence mTitlePrevious;
 	private Handler mHandler = new Handler();
 
 	public interface OnRefreshListener {
@@ -91,26 +93,42 @@ public class PPListView extends ListView implements OnScrollListener {
 
 		setOnScrollListener(this);
 
-		setLoadMoreEnable(false);
+		setLoadMoreEnable(true);
 		setRefreshEnable(true);
 
 		invalidate();
 	}
+	
 	private boolean setuped = false;
-	private void setup() {
+	private void setupTitleView() {
 		if (!setuped) {
 			setuped = true;
 			LinearLayout container = (LinearLayout)this.getParent().getParent();
-			mLayoutContent = (LinearLayout)container.findViewById(R.id.layout_content);
+			mLayoutContent = (RelativeLayout)container.findViewById(R.id.layout_content);
 			mLayoutSplash = (RelativeLayout)container.findViewById(R.id.layout_splash);
-			showFirstRefresh();
-			mTitleView = container.findViewById(R.id.title);
+			mTitleView = mLayoutContent.getChildAt(1);
+//			ViewGroup.LayoutParams params = mTitleView.getLayoutParams();
+//			params.height = 200;
+//			mTitleView.setLayoutParams(params);
+//			mTitleView.setTop(10);
+//			mTitleView.setBottom(70);
+			//showFirstRefresh();
+//			mTitleView = mInflater.inflate(R.layout.list_item_title, null);
+//			
+//			
+//			mLayoutContent.addView(mTitleView);
 		}
 	}
 
 	private void showFirstRefresh() {
+		mIsFirstRefreshing = true;
 		mLayoutContent.setVisibility(GONE);
 		mLayoutSplash.setVisibility(VISIBLE);
+	}
+	
+	private void showListView() {
+		mLayoutSplash.setVisibility(GONE);
+		mLayoutContent.setVisibility(VISIBLE);
 	}
 
 	private void setupHeaderView() {
@@ -251,7 +269,6 @@ public class PPListView extends ListView implements OnScrollListener {
 	@Override
 	public void onScroll(AbsListView view, int firstVisibleItem,
 			int visibleItemCount, int totalItemCount) {
-		setup();
 		if (firstVisibleItem == 0 && mRefreshListener != null) {
 			mIsRefreshable = true;
 		} else {
@@ -259,46 +276,104 @@ public class PPListView extends ListView implements OnScrollListener {
 		}
 		if (mState == DONE
 				&& mPreloadFactor != -1
-				&& mLoadMoreEnable
+				&& mLoadMoreEnable 
 				&& getLastVisiblePosition() + getHeaderViewsCount() >= getCount()
 				- mPreloadFactor) {
 			onLvLoadMore();
 		}
-		if (getAdapter() != null && getAdapter().getItemViewType(getFirstVisiblePosition()) == ITEM_TYPE_TITLE) {
+		if (getAdapter() != null && getAdapter().getItemViewType(getFirstVisiblePosition() + 1) == ITEM_TYPE_TITLE) {
+			//向上滚动
+			View titleView = getChildAt(1);
+			if (titleView != null) {
+				String tag = titleView == null ? "null" : (String)titleView.getTag();
+				int top = titleView.getTop();
+				int height = titleView.getHeight();
+				if (top < height) {
+					if (mTitleView == null) {
+						setupTitleView();
+					}
+					if (!mIsTitleRecording) {
+						mIsTitleRecording = true;
+						restorePreviousTitle();
+						mTitleRecordingView = titleView;
+					}				
+					Log.w("RRR", "title getFirstVisiblePosition(): " + getFirstVisiblePosition() + " getHeaderViewsCount(): " + getHeaderViewsCount() 
+							+ " tag: " + tag
+							+ " top:" + top
+							+ " view:" + mTitleView);
+					ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams)mTitleView.getLayoutParams();
+					params.topMargin = -(height - top);
+					mTitleView.setLayoutParams(params);
+					//mTitleView.setTop(-(height - top));
+				} else if (mIsTitleRecording) {
+					mIsTitleRecording = false;
+					mTitleRecordingView = null;
+					restorePreviousTitle();
+					ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams)mTitleView.getLayoutParams();
+					params.topMargin = 0;
+					mTitleView.setLayoutParams(params);
+				}
+			}
+		} else if (getAdapter() != null && getAdapter().getItemViewType(getFirstVisiblePosition()) == ITEM_TYPE_TITLE) {
 			View titleView = getChildAt(0);
 			if (titleView != null) {
 				String tag = titleView == null ? "null" : (String)titleView.getTag();
 				int top = titleView.getTop();
 				if (top < 0) {
-
-					Log.w("RRR", "title getFirstVisiblePosition(): " + getFirstVisiblePosition() + " getHeaderViewsCount(): " + getHeaderViewsCount() 
-							+ " tag: " + tag
-							+ " top:" + top);
+					if (mIsTitleRecording) {
+						mIsTitleRecording = false;
+						setTitle(mTitleRecordingView);
+						mTitleRecordingView = null;
+						Log.w("RRR", "title getFirstVisiblePosition(): " + getFirstVisiblePosition() + " getHeaderViewsCount(): " + getHeaderViewsCount() 
+								+ " tag: " + tag
+								+ " top:" + top);
+						ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams)mTitleView.getLayoutParams();
+						params.topMargin = 0;
+						mTitleView.setLayoutParams(params);
+					}
 				}
 			}
+		} else if (mIsTitleRecording) {
+			mIsTitleRecording = false;
+			mTitleRecordingView = null;
+			restorePreviousTitle();
 		}
+	}
+	
+	private void setTitle(View view) {
+		CharSequence title = ((TextView)view.findViewById(R.id.tv_item_title)).getText();
+		mTitlePrevious = ((TextView)mTitleView.findViewById(R.id.tv_item_title)).getText();
+		((TextView)mTitleView.findViewById(R.id.tv_item_title)).setText(title);
+	}
+	
+	private void restorePreviousTitle() {
+		((TextView)mTitleView.findViewById(R.id.tv_item_title)).setText(mTitlePrevious);
 	}
 
 	@Override
 	public void onScrollStateChanged(AbsListView view, int scrollState) {
 		if (scrollState == OnScrollListener.SCROLL_STATE_IDLE
-				&& mState == DONE
+				&& mState == DONE 
 				&& getLastVisiblePosition() == getCount() - getHeaderViewsCount()) {
 			onLvLoadMore();
 		}
 	}
 
 	public void onRefreshSuccess() {
+		if (mIsFirstRefreshing) {
+			//showListView();
+			mIsFirstRefreshing = false;
+		}
 		if (mRefreshEnable) {
 			mState = DONE;
 			mLastInfoView.setText("最后更新时间:" + new Date().toLocaleString());
 			changeHeaderViewByState();
 		}
-		if (mLoadMoreEnable && 
-				(getLastVisiblePosition() == getCount() - getHeaderViewsCount()
-				|| getLastVisiblePosition() == 0 - getHeaderViewsCount())) {
-			onLvLoadMore();
-		}
+//		if (mLoadMoreEnable && 
+//				(getLastVisiblePosition() == getCount() - getHeaderViewsCount()
+//				|| getLastVisiblePosition() == 0 - getHeaderViewsCount())) {
+//			onLvLoadMore();
+//		}
 	}
 
 	@Override
@@ -491,7 +566,7 @@ public class PPListView extends ListView implements OnScrollListener {
 		if (mLoadMoreEnable) {
 			mState = LOADING_MORE;
 
-			if (mRefreshListener != null) {
+			if (mRefreshListener != null ) {
 				mRefreshListener.onLoadMore();
 			}
 		}
