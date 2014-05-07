@@ -8,7 +8,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 
-public abstract class PPListViewAdapter extends BaseAdapter implements PinnedSectionedHeaderAdapter, ItemRemovableAdapter {
+public abstract class PPListViewAdapter extends BaseAdapter implements PinnedSectionedHeaderAdapter {
 
     private static int HEADER_VIEW_TYPE = 0;
     private static int ITEM_VIEW_TYPE = 0;
@@ -63,17 +63,13 @@ public abstract class PPListViewAdapter extends BaseAdapter implements PinnedSec
         mSectionCount = -1;
         super.notifyDataSetInvalidated();
     }
-    
-    @Override
-    public void onRemove(int positive) {
-    	notifyDataSetChanged();
-    }
 
     @Override
-    public final int getCount() {
-        if (mCount >= 0) {
-            return mCount;
-        }
+    public int getCount() {
+//        if (mCount >= 0) {
+//            return mCount;
+//        }
+        
         int count = 0;
         for (int i = 0; i < internalGetSectionCount(); i++) {
             count += internalGetCountForSection(i);
@@ -196,19 +192,16 @@ public abstract class PPListViewAdapter extends BaseAdapter implements PinnedSec
     public abstract View getSectionHeaderView(int section, View convertView, ViewGroup parent);
     
     private int internalGetCountForSection(int section) {
-        Integer cachedSectionCount = mSectionCountCache.get(section);
-        if (cachedSectionCount != null) {
-            return cachedSectionCount;
-        }
+//        Integer cachedSectionCount = mSectionCountCache.get(section);
+//        if (cachedSectionCount != null) {
+//            return cachedSectionCount;
+//        }
         int sectionCount = getCountForSection(section);
-        mSectionCountCache.put(section, sectionCount);
+        //mSectionCountCache.put(section, sectionCount);
         return sectionCount;
     }
 
     private int internalGetSectionCount() {
-        if (mSectionCount >= 0) {
-            return mSectionCount;
-        }
         mSectionCount = getSectionCount();
         return mSectionCount;
     }

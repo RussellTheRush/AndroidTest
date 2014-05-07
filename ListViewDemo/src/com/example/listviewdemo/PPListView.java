@@ -109,7 +109,6 @@ public class PPListView extends ListView implements OnScrollListener {
 		mState = DONE;
 		mIsRefreshable = false;
 		mInflater = LayoutInflater.from(context);
-
 		setOnScrollListener(this);
 
 		setLoadMoreEnable(true);
@@ -291,7 +290,7 @@ public class PPListView extends ListView implements OnScrollListener {
                 }
             }
         }
-        Log.w("RRR", "mCurTitleView: " + mCurTitleView + " mCurTitleOffset:" + mCurTitleOffset + " mTitleViewDisapear:" + mTitleViewDisapear);
+       // Log.w("RRR", "mCurTitleView: " + mCurTitleView + " mCurTitleOffset:" + mCurTitleOffset + " mTitleViewDisapear:" + mTitleViewDisapear);
 		invalidate();
 	}
 	
@@ -464,9 +463,6 @@ public class PPListView extends ListView implements OnScrollListener {
 					Animation.RELATIVE_TO_PARENT, 0f,
 					Animation.RELATIVE_TO_PARENT, 0f);
 			an.setDuration(300);
-			if (this.isEnabled()) {
-				this.setEnabled(false);
-			}
 			final View view = getChildAt(position + getHeaderViewsCount() - getFirstVisiblePosition());
 			if (view.getAnimation() != null) {
 				return;
@@ -515,7 +511,7 @@ public class PPListView extends ListView implements OnScrollListener {
 				view.setLayoutParams(lp);
 				view.setAlpha(1);
 				mState = DONE;
-				PPListView.this.setEnabled(true);
+				Log.w("RRR", "adapter count:" + getAdapter().getCount());
 				mRemovableAdapter.onRemove(position);
 			}
 		});

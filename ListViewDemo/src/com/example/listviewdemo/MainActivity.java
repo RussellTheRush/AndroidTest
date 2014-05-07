@@ -6,6 +6,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.example.listviewdemo.PPListView.ItemRemovableAdapter;
+
 import android.support.v4.app.Fragment;
 import android.app.Activity;
 import android.content.Context;
@@ -147,7 +149,8 @@ public class MainActivity extends Activity {
 		}
 	}
 	
-	private BaseAdapter baseAdapter = new BaseAdapter() {
+	private ABaseAdapter baseAdapter = new ABaseAdapter();
+	private class ABaseAdapter extends BaseAdapter implements ItemRemovableAdapter {
 
 		@Override
 		public View getView(final int position, View convertView,
@@ -170,11 +173,8 @@ public class MainActivity extends Activity {
 				@Override
 				public void onClick(View v) {
 					lv.removeItem(position);
-					mList.remove(position);
-					baseAdapter.notifyDataSetChanged();
 				}
 			});
-
 			return convertView;
 		}
 
@@ -195,9 +195,15 @@ public class MainActivity extends Activity {
 			// TODO Auto-generated method stub
 			return 0;
 		}
+
+		@Override
+		public void onRemove(int positive) {
+			mList.remove(positive);
+			super.notifyDataSetChanged();
+		}
 	};
 	
-	public class TestSectionedAdapter extends PPListViewAdapter {
+	public class TestSectionedAdapter extends PPListViewAdapter implements ItemRemovableAdapter{
 
 	    @Override
 	    public Object getItem(int section, int position) {
@@ -218,6 +224,12 @@ public class MainActivity extends Activity {
 	    public int getCountForSection(int section) {
 	        return section == mList.size()/15 ? mList.size()%15 :15;
 	    }
+	    
+//	    @Override
+//	    public int getCount() {
+//	    	// TODO Auto-generated method stub
+//	    	return mList.size();
+//	    }
 
 	    @Override
 	    public View getItemView(final int totalPosition, int section, int position, View convertView, ViewGroup parent) {
@@ -233,12 +245,10 @@ public class MainActivity extends Activity {
 			Button btn = (Button)convertView.findViewById(R.id.pp_d_del_btn);
 			
 			btn.setOnClickListener(new OnClickListener() {
-
+				
 				@Override
 				public void onClick(View v) {
 					lv.removeItem(totalPosition);
-					mList.remove(totalPosition);
-					
 				}
 			});
 			convertView.setTag("BBB, position: " + position);
@@ -255,5 +265,11 @@ public class MainActivity extends Activity {
 			convertView.setTag("AAA, position: " + section);
 			return convertView;
 	    }
+	    
+		@Override
+		public void onRemove(int positive) {
+			mList.remove(positive);
+			super.notifyDataSetChanged();
+		}
 	}
 }
