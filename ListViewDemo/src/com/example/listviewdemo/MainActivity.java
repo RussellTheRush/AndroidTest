@@ -43,7 +43,7 @@ public class MainActivity extends Activity {
 	private PPListView lv;
 
 	private List<String> mList = new ArrayList<String>();
-	private TestSectionedAdapter adapter;
+	private TestSectionedAdapter adapter = new TestSectionedAdapter();
 
 	private Handler mHandler = new Handler();
 
