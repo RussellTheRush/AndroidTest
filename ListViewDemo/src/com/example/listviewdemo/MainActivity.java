@@ -110,6 +110,7 @@ public class MainActivity extends Activity {
 
 		lv.setAdapter(adapter);
 		lv.setPreloadFactor(3);
+		lv.setShowTopTitle(true);
 		lv.setOnRemoveItemListener(new PPListView.OnRemoveItemListener() {
 
 			@Override

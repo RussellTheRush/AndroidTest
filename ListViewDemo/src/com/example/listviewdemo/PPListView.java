@@ -1,11 +1,13 @@
 package com.example.listviewdemo;
 
 import java.util.Date;
+
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.ValueAnimator;
 import android.animation.ValueAnimator.AnimatorUpdateListener;
 import android.content.Context;
+import android.graphics.Canvas;
 import android.os.Handler;
 import android.util.AttributeSet;
 import android.util.Log;
@@ -22,6 +24,7 @@ import android.widget.AbsListView;
 import android.widget.AbsListView.OnScrollListener;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
@@ -63,14 +66,16 @@ public class PPListView extends ListView implements OnScrollListener {
 	private boolean mIsRefreshable;
 	private boolean mRefreshEnable;
 	private int mPreloadFactor = -1;
-	private View mTitleView;
+	private View mCurTitleView;
 	private RelativeLayout mLayoutSplash;
 	private RelativeLayout mLayoutContent;
 	private boolean mIsFirstRefreshing = true;
-	private boolean mIsTitleRecording = false;
-	private View mTitleRecordingView;
-	private CharSequence mTitlePrevious;
+	private boolean mShouldShowTopTitle;
+	private ListAdapter mAdapter;
 	private Handler mHandler = new Handler();
+	private int mCurTitleOffset;
+	private int mWidthMode;
+	private int mHeightMode;
 
 	public interface OnRefreshListener {
 		public void onRefresh();
@@ -99,25 +104,35 @@ public class PPListView extends ListView implements OnScrollListener {
 		invalidate();
 	}
 	
-	private boolean setuped = false;
-	private void setupTitleView() {
-		if (!setuped) {
-			setuped = true;
-			LinearLayout container = (LinearLayout)this.getParent().getParent();
-			mLayoutContent = (RelativeLayout)container.findViewById(R.id.layout_content);
-			mLayoutSplash = (RelativeLayout)container.findViewById(R.id.layout_splash);
-			mTitleView = mLayoutContent.getChildAt(1);
-//			ViewGroup.LayoutParams params = mTitleView.getLayoutParams();
-//			params.height = 200;
-//			mTitleView.setLayoutParams(params);
-//			mTitleView.setTop(10);
-//			mTitleView.setBottom(70);
-			//showFirstRefresh();
-//			mTitleView = mInflater.inflate(R.layout.list_item_title, null);
-//			
-//			
-//			mLayoutContent.addView(mTitleView);
-		}
+	public void setShowTopTitle(boolean show) {
+		mShouldShowTopTitle = show;
+	}
+	
+//	private boolean setuped = false;
+//	private void setupTitleView() {
+//		if (!setuped) {
+//			setuped = true;
+//			LinearLayout container = (LinearLayout)this.getParent().getParent();
+//			mLayoutContent = (RelativeLayout)container.findViewById(R.id.layout_content);
+//			mLayoutSplash = (RelativeLayout)container.findViewById(R.id.layout_splash);
+//			mTitleView = mLayoutContent.getChildAt(1);
+////			ViewGroup.LayoutParams params = mTitleView.getLayoutParams();
+////			params.height = 200;
+////			mTitleView.setLayoutParams(params);
+////			mTitleView.setTop(10);
+////			mTitleView.setBottom(70);
+//			//showFirstRefresh();
+////			mTitleView = mInflater.inflate(R.layout.list_item_title, null);
+////			
+////			
+////			mLayoutContent.addView(mTitleView);
+//		}
+//	}
+	
+	@Override
+	public void setAdapter(ListAdapter adapter) {
+		mAdapter = adapter;
+		super.setAdapter(adapter);
 	}
 
 	private void showFirstRefresh() {
@@ -244,6 +259,13 @@ public class PPListView extends ListView implements OnScrollListener {
 			refreshListener.onRefresh();
 		}
 	}
+	
+	@Override
+	protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+		super.onMeasure(widthMeasureSpec, heightMeasureSpec);
+		mWidthMode = MeasureSpec.getMode(widthMeasureSpec);
+		mHeightMode = MeasureSpec.getMode(heightMeasureSpec);
+	}
 
 	//	@Override
 	//	protected void measureChildren(int widthMeasureSpec,
@@ -281,74 +303,62 @@ public class PPListView extends ListView implements OnScrollListener {
 				- mPreloadFactor) {
 			onLvLoadMore();
 		}
-		if (getAdapter() != null && getAdapter().getItemViewType(getFirstVisiblePosition() + 1) == ITEM_TYPE_TITLE) {
-			//向上滚动
-			View titleView = getChildAt(1);
-			if (titleView != null) {
-				String tag = titleView == null ? "null" : (String)titleView.getTag();
-				int top = titleView.getTop();
-				int height = titleView.getHeight();
-				if (top < height) {
-					if (mTitleView == null) {
-						setupTitleView();
-					}
-					if (!mIsTitleRecording) {
-						mIsTitleRecording = true;
-						restorePreviousTitle();
-						mTitleRecordingView = titleView;
-					}				
-					Log.w("RRR", "title getFirstVisiblePosition(): " + getFirstVisiblePosition() + " getHeaderViewsCount(): " + getHeaderViewsCount() 
-							+ " tag: " + tag
-							+ " top:" + top
-							+ " view:" + mTitleView);
-					ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams)mTitleView.getLayoutParams();
-					params.topMargin = -(height - top);
-					mTitleView.setLayoutParams(params);
-					//mTitleView.setTop(-(height - top));
-				} else if (mIsTitleRecording) {
-					mIsTitleRecording = false;
-					mTitleRecordingView = null;
-					restorePreviousTitle();
-					ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams)mTitleView.getLayoutParams();
-					params.topMargin = 0;
-					mTitleView.setLayoutParams(params);
-				}
-			}
-		} else if (getAdapter() != null && getAdapter().getItemViewType(getFirstVisiblePosition()) == ITEM_TYPE_TITLE) {
-			View titleView = getChildAt(0);
-			if (titleView != null) {
-				String tag = titleView == null ? "null" : (String)titleView.getTag();
-				int top = titleView.getTop();
-				if (top < 0) {
-					if (mIsTitleRecording) {
-						mIsTitleRecording = false;
-						setTitle(mTitleRecordingView);
-						mTitleRecordingView = null;
-						Log.w("RRR", "title getFirstVisiblePosition(): " + getFirstVisiblePosition() + " getHeaderViewsCount(): " + getHeaderViewsCount() 
-								+ " tag: " + tag
-								+ " top:" + top);
-						ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams)mTitleView.getLayoutParams();
-						params.topMargin = 0;
-						mTitleView.setLayoutParams(params);
-					}
-				}
-			}
-		} else if (mIsTitleRecording) {
-			mIsTitleRecording = false;
-			mTitleRecordingView = null;
-			restorePreviousTitle();
+		
+		
+		if (!mShouldShowTopTitle || mAdapter == null || mAdapter.getCount() == 0 || (firstVisibleItem < getHeaderViewsCount())) {
+			return;
 		}
+		
+		mCurTitleOffset = 0;
+		for (int i = firstVisibleItem; i < firstVisibleItem + visibleItemCount; i++) {
+			if (mAdapter.getItemViewType(i) == ITEM_TYPE_TITLE) {
+				View titleView = getChildAt(i - firstVisibleItem);	
+				int top = titleView.getTop();
+				int height = mCurTitleView == null ? titleView.getMeasuredHeight() : mCurTitleView.getMeasuredHeight();
+				if (top <= height && top > 0) {
+					View oldView = mCurTitleView;
+					mCurTitleView = mAdapter.getView(i, oldView, this);
+					if (mCurTitleView != oldView) {
+						ensureTitleViewLayout();
+					}
+					mCurTitleOffset = top - height;
+				}
+			}
+		}
+		
+		invalidate();
+		
 	}
 	
-	private void setTitle(View view) {
-		CharSequence title = ((TextView)view.findViewById(R.id.tv_item_title)).getText();
-		mTitlePrevious = ((TextView)mTitleView.findViewById(R.id.tv_item_title)).getText();
-		((TextView)mTitleView.findViewById(R.id.tv_item_title)).setText(title);
+    private void ensureTitleViewLayout() {
+        if (mCurTitleView.isLayoutRequested()) {
+            int widthSpec = MeasureSpec.makeMeasureSpec(getMeasuredWidth(), mWidthMode);
+            
+            int heightSpec;
+            ViewGroup.LayoutParams layoutParams = mCurTitleView.getLayoutParams();
+            if (layoutParams != null && layoutParams.height > 0) {
+                heightSpec = MeasureSpec.makeMeasureSpec(layoutParams.height, MeasureSpec.EXACTLY);
+            } else {
+                heightSpec = MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED);
+            }
+            mCurTitleView.measure(widthSpec, heightSpec);
+            mCurTitleView.layout(0, 0, mCurTitleView.getMeasuredWidth(), mCurTitleView.getMeasuredHeight());
+        }
+    }
+	
+	@Override
+	protected void dispatchDraw(Canvas canvas) {
+		super.dispatchDraw(canvas);
+		if (mCurTitleView == null || !mShouldShowTopTitle || mAdapter == null) {
+			return;
+		}
+		int saveCount = canvas.save();
+		canvas.translate(0, mCurTitleOffset);
+		canvas.clipRect(0, 0, getWidth(), mCurTitleView.getMeasuredHeight());
+		mCurTitleView.draw(canvas);
+		canvas.restoreToCount(saveCount);
 	}
 	
-	private void restorePreviousTitle() {
-		((TextView)mTitleView.findViewById(R.id.tv_item_title)).setText(mTitlePrevious);
-	}
 
 	@Override
 	public void onScrollStateChanged(AbsListView view, int scrollState) {
