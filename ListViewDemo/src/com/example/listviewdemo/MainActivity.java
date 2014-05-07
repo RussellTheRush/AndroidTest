@@ -112,15 +112,6 @@ public class MainActivity extends Activity {
 
 		lv.setAdapter(adapter);
 		lv.setPreloadFactor(3);
-		lv.setShowTopTitle(true);
-		lv.setOnRemoveItemListener(new PPListView.OnRemoveItemListener() {
-
-			@Override
-			public void removeItem(int position) {
-				mList.remove(position);
-				adapter.notifyDataSetChanged();
-			}
-		});
 
 	}
 
@@ -156,17 +147,65 @@ public class MainActivity extends Activity {
 		}
 	}
 	
-	public class TestSectionedAdapter extends SectionedBaseAdapter {
+	private BaseAdapter baseAdapter = new BaseAdapter() {
+
+		@Override
+		public View getView(final int position, View convertView,
+				ViewGroup parent) {
+			if (convertView == null) {
+				convertView = LayoutInflater.from(mContext).inflate(
+						R.layout.list_item, null);
+			}
+			ImageView iv = (ImageView) convertView
+					.findViewById(R.id.pp_app_img);
+			TextView tv = (TextView) convertView
+					.findViewById(R.id.pp_app_name);
+			loadBitmap();
+			iv.setImageBitmap(bitmap);
+			tv.setText(mList.get(position));
+			Button btn = (Button) convertView
+					.findViewById(R.id.pp_d_del_btn);
+
+			btn.setOnClickListener(new OnClickListener() {
+				@Override
+				public void onClick(View v) {
+					lv.removeItem(position);
+					mList.remove(position);
+					baseAdapter.notifyDataSetChanged();
+				}
+			});
+
+			return convertView;
+		}
+
+		@Override
+		public int getCount() {
+			// TODO Auto-generated method stub
+			return mList.size();
+		}
+
+		@Override
+		public Object getItem(int position) {
+			// TODO Auto-generated method stub
+			return null;
+		}
+
+		@Override
+		public long getItemId(int position) {
+			// TODO Auto-generated method stub
+			return 0;
+		}
+	};
+	
+	public class TestSectionedAdapter extends PPListViewAdapter {
 
 	    @Override
 	    public Object getItem(int section, int position) {
-	        // TODO Auto-generated method stub
 	        return null;
 	    }
 
 	    @Override
 	    public long getItemId(int section, int position) {
-	        // TODO Auto-generated method stub
 	        return 0;
 	    }
 
@@ -181,7 +220,7 @@ public class MainActivity extends Activity {
 	    }
 
 	    @Override
-	    public View getItemView(final int section, final int position, View convertView, ViewGroup parent) {
+	    public View getItemView(final int totalPosition, int section, int position, View convertView, ViewGroup parent) {
 	    	if(convertView==null){
 				convertView=LayoutInflater.from(mContext).inflate(R.layout.list_item, parent, false);
 			}
@@ -189,14 +228,17 @@ public class MainActivity extends Activity {
 			TextView tv = (TextView)convertView.findViewById(R.id.pp_app_name);
 			loadBitmap();
 			iv.setImageBitmap(bitmap);
-			tv.setText("settion: " + section + " position: " + position);
+			//tv.setText("settion: " + section + " position: " + totalPosition + " id: " + mList.get(totalPosition));
+			tv.setText(" id: " + mList.get(totalPosition));
 			Button btn = (Button)convertView.findViewById(R.id.pp_d_del_btn);
 			
 			btn.setOnClickListener(new OnClickListener() {
 
 				@Override
 				public void onClick(View v) {
-					lv.removeItem(section * 15 + position + 1);
+					lv.removeItem(totalPosition);
+					mList.remove(totalPosition);
+					
 				}
 			});
 			convertView.setTag("BBB, position: " + position);
@@ -214,5 +256,4 @@ public class MainActivity extends Activity {
 			return convertView;
 	    }
 	}
-
 }

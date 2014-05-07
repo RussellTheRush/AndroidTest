@@ -1,5 +1,6 @@
 package com.example.listviewdemo;
 
+import com.example.listviewdemo.PPListView.ItemRemovableAdapter;
 import com.example.listviewdemo.PPListView.PinnedSectionedHeaderAdapter;
 
 import android.util.SparseArray;
@@ -7,7 +8,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 
-public abstract class SectionedBaseAdapter extends BaseAdapter implements PinnedSectionedHeaderAdapter {
+public abstract class PPListViewAdapter extends BaseAdapter implements PinnedSectionedHeaderAdapter, ItemRemovableAdapter {
 
     private static int HEADER_VIEW_TYPE = 0;
     private static int ITEM_VIEW_TYPE = 0;
@@ -34,7 +35,7 @@ public abstract class SectionedBaseAdapter extends BaseAdapter implements Pinned
      */
     private int mSectionCount;
 
-    public SectionedBaseAdapter() {
+    public PPListViewAdapter() {
         super();
         mSectionCache = new SparseArray<Integer>();
         mSectionPositionCache = new SparseArray<Integer>();
@@ -61,6 +62,11 @@ public abstract class SectionedBaseAdapter extends BaseAdapter implements Pinned
         mCount = -1;
         mSectionCount = -1;
         super.notifyDataSetInvalidated();
+    }
+    
+    @Override
+    public void onRemove(int positive) {
+    	notifyDataSetChanged();
     }
 
     @Override
@@ -92,8 +98,9 @@ public abstract class SectionedBaseAdapter extends BaseAdapter implements Pinned
         if (isSectionHeader(position)) {
             return getSectionHeaderView(getSectionForPosition(position), convertView, parent);
         }
-        return getItemView(getSectionForPosition(position), getPositionInSectionForPosition(position), convertView, parent);
+        return getItemView(position, getSectionForPosition(position), getPositionInSectionForPosition(position), convertView, parent);
     }
+    
 
     @Override
     public final int getItemViewType(int position) {
@@ -175,19 +182,19 @@ public abstract class SectionedBaseAdapter extends BaseAdapter implements Pinned
     public int getSectionHeaderViewTypeCount() {
         return 1;
     }
-
+    
     public abstract Object getItem(int section, int position);
-
+    
     public abstract long getItemId(int section, int position);
-
+    
     public abstract int getSectionCount();
-
+    
     public abstract int getCountForSection(int section);
-
-    public abstract View getItemView(int section, int position, View convertView, ViewGroup parent);
-
+    
+    public abstract View getItemView(int totolPosition, int section, int position, View convertView, ViewGroup parent);
+    
     public abstract View getSectionHeaderView(int section, View convertView, ViewGroup parent);
-
+    
     private int internalGetCountForSection(int section) {
         Integer cachedSectionCount = mSectionCountCache.get(section);
         if (cachedSectionCount != null) {
@@ -205,5 +212,4 @@ public abstract class SectionedBaseAdapter extends BaseAdapter implements Pinned
         mSectionCount = getSectionCount();
         return mSectionCount;
     }
-
 }

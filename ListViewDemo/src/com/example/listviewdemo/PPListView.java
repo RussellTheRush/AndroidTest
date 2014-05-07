@@ -26,7 +26,6 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListAdapter;
 import android.widget.ListView;
-import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 public class PPListView extends ListView implements OnScrollListener {
@@ -61,15 +60,14 @@ public class PPListView extends ListView implements OnScrollListener {
 	private int mState;
 	private boolean mIsRecored;
 	private OnRefreshListener mRefreshListener;
-	private OnRemoveItemListener mRemoveListener;
 	private LayoutInflater mInflater;
 	private boolean mIsRefreshable;
 	private boolean mRefreshEnable;
 	private int mPreloadFactor = -1;
 	private View mCurTitleView;
 	private boolean mIsFirstRefreshing = true;
-	private boolean mShouldShowTopTitle;
-	private PinnedSectionedHeaderAdapter mAdapter;
+	private PinnedSectionedHeaderAdapter mSectionedAdapter;
+	private ItemRemovableAdapter mRemovableAdapter;
 	private Handler mHandler = new Handler();
 	private int mCurTitleOffset;
 	private int mWidthMode;
@@ -87,7 +85,10 @@ public class PPListView extends ListView implements OnScrollListener {
         public int getSectionHeaderViewType(int section);
 
         public int getCount();
-
+    }
+    
+    public static interface ItemRemovableAdapter {
+    	public void onRemove(int positive);
     }
 
 	public interface OnRefreshListener {
@@ -117,13 +118,14 @@ public class PPListView extends ListView implements OnScrollListener {
 		invalidate();
 	}
 	
-	public void setShowTopTitle(boolean show) {
-		mShouldShowTopTitle = show;
-	}
-	
 	@Override
 	public void setAdapter(ListAdapter adapter) {
-		mAdapter = (PinnedSectionedHeaderAdapter)adapter;
+		if (adapter  instanceof PinnedSectionedHeaderAdapter) {
+			mSectionedAdapter = (PinnedSectionedHeaderAdapter)adapter;
+		}
+		if (adapter instanceof ItemRemovableAdapter) {
+			mRemovableAdapter = (ItemRemovableAdapter)adapter;
+		}
 		super.setAdapter(adapter);
 	}
 
@@ -186,10 +188,6 @@ public class PPListView extends ListView implements OnScrollListener {
 		} else if (!mRefreshEnable && mHeaderView != null){
 			destroyHeaderView();
 		}
-	}
-
-	public void setOnRemoveItemListener(OnRemoveItemListener l) {
-		mRemoveListener = l;
 	}
 
 	public void setLoadMoreEnable(boolean bLoadMoreEnable) {
@@ -265,57 +263,42 @@ public class PPListView extends ListView implements OnScrollListener {
 		}
 		
 		
-		if (!mShouldShowTopTitle || mAdapter == null || mAdapter.getCount() == 0 || (firstVisibleItem < getHeaderViewsCount())) {
+		if (mSectionedAdapter == null || mSectionedAdapter.getCount() == 0 || (firstVisibleItem < getHeaderViewsCount())) {
 			return;
 		}
 		
         firstVisibleItem -= getHeaderViewsCount();
+        
+        if (getChildAt(0) != mHeaderView) {
+        	mTitleViewDisapear = false;
+        }
 
-        int section = mAdapter.getSectionForPosition(firstVisibleItem);
-        int viewType = mAdapter.getSectionHeaderViewType(section);
+        int section = mSectionedAdapter.getSectionForPosition(firstVisibleItem);
         mCurTitleView = getSectionHeaderView(section, mCurTitleView);
         ensureTitleViewLayout();
-        
         mCurTitleOffset = 0;
-
+        
         for (int i = firstVisibleItem; i < firstVisibleItem + visibleItemCount; i++) {
-            if (mAdapter.isSectionHeader(i)) {
+            if (mSectionedAdapter.isSectionHeader(i)) {
                 View header = getChildAt(i - firstVisibleItem);
                 int headerTop = header.getTop();
                 int pinnedHeaderHeight = mCurTitleView.getMeasuredHeight();
                 
                 if (pinnedHeaderHeight >= headerTop && headerTop > 0) {
+                	mTitleViewDisapear = false;
                 	mCurTitleOffset = headerTop - header.getHeight();
+                	break;
                 }
             }
         }
-		
-//		mCurTitleOffset = 0;
-//        firstVisibleItem -= getHeaderViewsCount();
-//
-//		for (int i = firstVisibleItem; i < firstVisibleItem + visibleItemCount; i++) {
-//			if () {
-//				View titleView = getChildAt(i - firstVisibleItem);	
-//				int top = titleView.getTop();
-//				int height = mCurTitleView == null ? titleView.getMeasuredHeight() : mCurTitleView.getMeasuredHeight();
-//				if (top <= height && top > 0) {
-//                    Log.w("RRR", "top: " + top + " height: " + height);
-//					View oldView = mCurTitleView;
-//					mCurTitleView = mAdapter.getView(i, oldView, this);
-//					if (mCurTitleView != oldView) {
-//						ensureTitleViewLayout();
-//					}
-//					mCurTitleOffset = top - height;
-//				}
-//			}
-//		}
+        Log.w("RRR", "mCurTitleView: " + mCurTitleView + " mCurTitleOffset:" + mCurTitleOffset + " mTitleViewDisapear:" + mTitleViewDisapear);
 		invalidate();
 	}
 	
     private View getSectionHeaderView(int section, View oldView) {
         boolean shouldLayout = section != mCurrentSection || oldView == null;
 
-        View view = mAdapter.getSectionHeaderView(section, oldView, this);
+        View view = mSectionedAdapter.getSectionHeaderView(section, oldView, this);
         if (shouldLayout) {
             // a new section, thus a new header. We should lay it out again
             mCurrentSection = section;
@@ -342,7 +325,7 @@ public class PPListView extends ListView implements OnScrollListener {
 	@Override
 	protected void dispatchDraw(Canvas canvas) {
 		super.dispatchDraw(canvas);
-		if (mTitleViewDisapear || mCurTitleView == null || !mShouldShowTopTitle || mAdapter == null) {
+		if (mTitleViewDisapear || mCurTitleView == null || mSectionedAdapter == null) {
 			return;
 		}
 		int saveCount = canvas.save();
@@ -372,6 +355,7 @@ public class PPListView extends ListView implements OnScrollListener {
 			mLastInfoView.setText("最后更新时间:" + new Date().toLocaleString());
 			changeHeaderViewByState();
 		}
+		
 //		if (mLoadMoreEnable && 
 //				(getLastVisiblePosition() == getCount() - getHeaderViewsCount()
 //				|| getLastVisiblePosition() == 0 - getHeaderViewsCount())) {
@@ -381,7 +365,7 @@ public class PPListView extends ListView implements OnScrollListener {
 
 	@Override
 	public boolean onTouchEvent(MotionEvent ev) {
-		if (mState == ITEM_DELETING) {
+		if (mState == ITEM_DELETING || mState == REFRESHING) {
 			return true;
 		}
 		if (!mRefreshEnable) {
@@ -409,7 +393,6 @@ public class PPListView extends ListView implements OnScrollListener {
 				}
 				mIsRecored = false;
 				mIsBack = false;
-
 				break;
 
 			case MotionEvent.ACTION_MOVE:
@@ -446,11 +429,13 @@ public class PPListView extends ListView implements OnScrollListener {
 							changeHeaderViewByState();
 						}
 					}
-                    mTitleViewDisapear = true;
+
+					mTitleViewDisapear = true;
+					invalidate();
+		
 					if (mState == PULL_To_REFRESH) {
 						mHeaderView.setPadding(0, -1 * mHeaderContentHeight
 								+ (tempY - mStartY) / RATIO, 0, 0);
-
 					}
 					if (mState == RELEASE_To_REFRESH) {
 						mHeaderView.setPadding(0, (tempY - mStartY) / RATIO
@@ -467,9 +452,10 @@ public class PPListView extends ListView implements OnScrollListener {
 	}
 
 	public void removeItem(final int position) {
-		if (mState == ITEM_DELETING || mRemoveListener == null) {
+		if (mRemovableAdapter == null) {
 			return;
 		}
+		
 		if (position >= 0 && position < getCount()) {
 			mState = ITEM_DELETING;
 			TranslateAnimation an = new TranslateAnimation(
@@ -478,13 +464,18 @@ public class PPListView extends ListView implements OnScrollListener {
 					Animation.RELATIVE_TO_PARENT, 0f,
 					Animation.RELATIVE_TO_PARENT, 0f);
 			an.setDuration(300);
-
+			if (this.isEnabled()) {
+				this.setEnabled(false);
+			}
 			final View view = getChildAt(position + getHeaderViewsCount() - getFirstVisiblePosition());
-
+			if (view.getAnimation() != null) {
+				return;
+			}
 			an.setAnimationListener(new AnimationListener() {
 
 				@Override
 				public void onAnimationStart(Animation animation) {
+					
 				}
 
 				@Override
@@ -504,7 +495,7 @@ public class PPListView extends ListView implements OnScrollListener {
 
 	private void shrinkItem(final View view, final int position) {
 		final ViewGroup.LayoutParams lp = view.getLayoutParams();// 获取item的布局参数
-		final int originalHeight = view.getHeight();// item的高度
+		final int originalHeight = view.getMeasuredHeight();// item的高度
 		ShrinkAnimation animation = new ShrinkAnimation(view,
 				originalHeight, 0);
 		animation.setDuration(200);
@@ -523,41 +514,13 @@ public class PPListView extends ListView implements OnScrollListener {
 				lp.height = originalHeight;
 				view.setLayoutParams(lp);
 				view.setAlpha(1);
-				mRemoveListener.removeItem(position);
 				mState = DONE;
+				PPListView.this.setEnabled(true);
+				mRemovableAdapter.onRemove(position);
 			}
 		});
 		view.setAnimation(animation);
 		animation.start();
-
-		// final ViewGroup.LayoutParams lp = view.getLayoutParams();//
-		// 获取item的布局参数
-		// final int originalHeight = view.getHeight();// item的高度
-		// ValueAnimator animator = ValueAnimator.ofInt(originalHeight, 0)
-		// .setDuration(200);
-		// animator.addListener(new AnimatorListenerAdapter() {
-		// @Override
-		// public void onAnimationEnd(Animator animation) {
-		// // 这段代码很重要，因为我们并没有将item从ListView中移除，而是将item的高度设置为0
-		// // 所以我们在动画执行完毕之后将item设置回来
-		// lp.height = originalHeight;
-		// view.setLayoutParams(lp);
-		// view.setAlpha(1);
-		// mRemoveListener.removeItem(position);
-		// mState = DONE;
-		// }
-		// });
-		// animator.addUpdateListener(new
-		// ValueAnimator.AnimatorUpdateListener() {
-		// @Override
-		// public void onAnimationUpdate(ValueAnimator valueAnimator) {
-		// // 这段代码的效果是ListView删除某item之后，其他的item向上滑动的效果
-		// lp.height = (Integer) valueAnimator.getAnimatedValue();
-		// view.setLayoutParams(lp);
-		//
-		// }
-		// });
-		// animator.start();
 	}
 
 	private void onLvRefresh() {
@@ -601,6 +564,9 @@ public class PPListView extends ListView implements OnScrollListener {
 			break;
 
 		case REFRESHING:
+			if (this.isEnabled()) {
+				this.setEnabled(false);
+			}
 			mArrowView.setVisibility(View.GONE);
 			mArrowView.clearAnimation();
 			mProgressBar.setVisibility(View.VISIBLE);
@@ -622,7 +588,7 @@ public class PPListView extends ListView implements OnScrollListener {
 					public void onAnimationEnd(Animator animation) {
 						// 显示正在刷新
 						mHeaderView.setPadding(0, 0, 0, 0);
-
+						
 						clearAnimation();
 					}
 				});
@@ -651,7 +617,7 @@ public class PPListView extends ListView implements OnScrollListener {
 				animator2.addListener(new AnimatorListenerAdapter() {
 					@Override
 					public void onAnimationEnd(Animator animation) {
-
+						PPListView.this.setEnabled(true);
 						mHeaderView.setPadding(0,
 								-1 * mHeaderContentHeight, 0, 0);
 						clearAnimation();
