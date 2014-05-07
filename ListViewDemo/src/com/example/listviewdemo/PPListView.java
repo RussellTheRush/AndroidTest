@@ -112,17 +112,6 @@ public class PPListView extends ListView implements OnScrollListener {
 		super.setAdapter(adapter);
 	}
 
-	private void showFirstRefresh() {
-		mIsFirstRefreshing = true;
-		mLayoutContent.setVisibility(GONE);
-		mLayoutSplash.setVisibility(VISIBLE);
-	}
-	
-	private void showListView() {
-		mLayoutSplash.setVisibility(GONE);
-		mLayoutContent.setVisibility(VISIBLE);
-	}
-
 	private void setupHeaderView() {
 		mHeaderView = (LinearLayout) mInflater.inflate(
 				R.layout.pp_list_header, null);
