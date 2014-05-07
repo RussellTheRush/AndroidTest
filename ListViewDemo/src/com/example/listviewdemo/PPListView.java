@@ -74,6 +74,7 @@ public class PPListView extends ListView implements OnScrollListener {
 	private int mCurTitleOffset;
 	private int mWidthMode;
 	private int mHeightMode;
+    private boolean mTitleViewDisapear = false;
 
 	public interface OnRefreshListener {
 		public void onRefresh();
@@ -297,7 +298,7 @@ public class PPListView extends ListView implements OnScrollListener {
 	@Override
 	protected void dispatchDraw(Canvas canvas) {
 		super.dispatchDraw(canvas);
-		if (mCurTitleView == null || !mShouldShowTopTitle || mAdapter == null) {
+		if (mTitleViewDisapear || mCurTitleView == null || !mShouldShowTopTitle || mAdapter == null) {
 			return;
 		}
 		int saveCount = canvas.save();
@@ -401,6 +402,7 @@ public class PPListView extends ListView implements OnScrollListener {
 							changeHeaderViewByState();
 						}
 					}
+                    mTitleViewDisapear = true;
 					if (mState == PULL_To_REFRESH) {
 						mHeaderView.setPadding(0, -1 * mHeaderContentHeight
 								+ (tempY - mStartY) / RATIO, 0, 0);
@@ -609,6 +611,7 @@ public class PPListView extends ListView implements OnScrollListener {
 						mHeaderView.setPadding(0,
 								-1 * mHeaderContentHeight, 0, 0);
 						clearAnimation();
+                        mTitleViewDisapear = false;
 						mTipView.setText("下拉刷新");
 					}
 				});

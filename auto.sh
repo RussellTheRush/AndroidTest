@@ -2,6 +2,11 @@
 
 mm
 
+if [ "$?" -ne  0 ]
+then
+    return
+fi
+
 P=$ANDROID_PRODUCT_OUT
 F=$P/data/app/PPListViewDemo.apk
 
