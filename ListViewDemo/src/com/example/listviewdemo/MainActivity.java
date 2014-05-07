@@ -172,16 +172,16 @@ public class MainActivity extends Activity {
 
 	    @Override
 	    public int getSectionCount() {
-	        return 7;
+	        return mList.size()/15;
 	    }
 
 	    @Override
 	    public int getCountForSection(int section) {
-	        return 15;
+	        return section == mList.size()/15 ? mList.size()%15 :15;
 	    }
 
 	    @Override
-	    public View getItemView(int section, final int position, View convertView, ViewGroup parent) {
+	    public View getItemView(final int section, final int position, View convertView, ViewGroup parent) {
 	    	if(convertView==null){
 				convertView=LayoutInflater.from(mContext).inflate(R.layout.list_item, parent, false);
 			}
@@ -189,14 +189,14 @@ public class MainActivity extends Activity {
 			TextView tv = (TextView)convertView.findViewById(R.id.pp_app_name);
 			loadBitmap();
 			iv.setImageBitmap(bitmap);
-			tv.setText(mList.get(position));
+			tv.setText("settion: " + section + " position: " + position);
 			Button btn = (Button)convertView.findViewById(R.id.pp_d_del_btn);
 			
 			btn.setOnClickListener(new OnClickListener() {
 
 				@Override
 				public void onClick(View v) {
-					lv.removeItem(position);
+					lv.removeItem(section * 15 + position + 1);
 				}
 			});
 			convertView.setTag("BBB, position: " + position);
@@ -209,7 +209,7 @@ public class MainActivity extends Activity {
 				convertView=LayoutInflater.from(mContext).inflate(R.layout.list_item_title, parent, false);
 			}
 			TextView tv = (TextView)convertView.findViewById(R.id.tv_item_title);
-			tv.setText("POSITION: " + section);
+			tv.setText("SECTION: " + section);
 			convertView.setTag("AAA, position: " + section);
 			return convertView;
 	    }

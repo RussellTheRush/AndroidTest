@@ -269,12 +269,13 @@ public class PPListView extends ListView implements OnScrollListener {
 			return;
 		}
 		
+        firstVisibleItem -= getHeaderViewsCount();
+
         int section = mAdapter.getSectionForPosition(firstVisibleItem);
         int viewType = mAdapter.getSectionHeaderViewType(section);
         mCurTitleView = getSectionHeaderView(section, mCurTitleView);
         ensureTitleViewLayout();
         
-        firstVisibleItem -= getHeaderViewsCount();
         mCurTitleOffset = 0;
 
         for (int i = firstVisibleItem; i < firstVisibleItem + visibleItemCount; i++) {
