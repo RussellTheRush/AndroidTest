@@ -29,6 +29,7 @@ import android.widget.ArrayAdapter;
 import android.widget.BaseAdapter;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.RelativeLayout;
@@ -42,6 +43,7 @@ public class MainActivity extends Activity {
 	private PPListView lv;
 
 	private List<String> mList = new ArrayList<String>();
+	private TestSectionedAdapter adapter;
 
 	private Handler mHandler = new Handler();
 
@@ -153,64 +155,64 @@ public class MainActivity extends Activity {
 			}
 		}
 	}
+	
+	public class TestSectionedAdapter extends SectionedBaseAdapter {
 
-	private BaseAdapter adapter = new BaseAdapter() {
+	    @Override
+	    public Object getItem(int section, int position) {
+	        // TODO Auto-generated method stub
+	        return null;
+	    }
 
-		public int getItemViewType(int position) {
-			return (position % 10 != 0) ? PPListView.ITEM_TYPE_CONTENT : PPListView.ITEM_TYPE_TITLE;
-		}
+	    @Override
+	    public long getItemId(int section, int position) {
+	        // TODO Auto-generated method stub
+	        return 0;
+	    }
 
-		public int getViewTypeCount() {
-			return PPListView.ITEM_TYPE_COUNT;
-		}
+	    @Override
+	    public int getSectionCount() {
+	        return 7;
+	    }
 
-		@Override
-		public View getView(final int position, View convertView, ViewGroup parent) {
+	    @Override
+	    public int getCountForSection(int section) {
+	        return 15;
+	    }
 
-			if (getItemViewType(position) == PPListView.ITEM_TYPE_TITLE) {
-				if(convertView==null){
-					convertView=LayoutInflater.from(mContext).inflate(R.layout.list_item_title, parent, false);
-				}
-				TextView tv = (TextView)convertView.findViewById(R.id.tv_item_title);
-				tv.setText("POSITION: " + position);
-				convertView.setTag("AAA, position: " + position);
-			} else {
-				if(convertView==null){
-					convertView=LayoutInflater.from(mContext).inflate(R.layout.list_item, parent, false);
-				}
-				ImageView iv = (ImageView)convertView.findViewById(R.id.pp_app_img);
-				TextView tv = (TextView)convertView.findViewById(R.id.pp_app_name);
-				loadBitmap();
-				iv.setImageBitmap(bitmap);
-				tv.setText(mList.get(position));
-				Button btn = (Button)convertView.findViewById(R.id.pp_d_del_btn);
-				
-				btn.setOnClickListener(new OnClickListener() {
-
-					@Override
-					public void onClick(View v) {
-						lv.removeItem(position);
-					}
-				});
-				convertView.setTag("BBB, position: " + position);
+	    @Override
+	    public View getItemView(int section, final int position, View convertView, ViewGroup parent) {
+	    	if(convertView==null){
+				convertView=LayoutInflater.from(mContext).inflate(R.layout.list_item, parent, false);
 			}
+			ImageView iv = (ImageView)convertView.findViewById(R.id.pp_app_img);
+			TextView tv = (TextView)convertView.findViewById(R.id.pp_app_name);
+			loadBitmap();
+			iv.setImageBitmap(bitmap);
+			tv.setText(mList.get(position));
+			Button btn = (Button)convertView.findViewById(R.id.pp_d_del_btn);
+			
+			btn.setOnClickListener(new OnClickListener() {
+
+				@Override
+				public void onClick(View v) {
+					lv.removeItem(position);
+				}
+			});
+			convertView.setTag("BBB, position: " + position);
 			return convertView;
-		}
+	    }
 
-		@Override
-		public int getCount() {
-			return mList.size();
-		}
+	    @Override
+	    public View getSectionHeaderView(int section, View convertView, ViewGroup parent) {
+	    	if(convertView==null){
+				convertView=LayoutInflater.from(mContext).inflate(R.layout.list_item_title, parent, false);
+			}
+			TextView tv = (TextView)convertView.findViewById(R.id.tv_item_title);
+			tv.setText("POSITION: " + section);
+			convertView.setTag("AAA, position: " + section);
+			return convertView;
+	    }
+	}
 
-		@Override
-		public Object getItem(int position) {
-			return null;
-		}
-
-		@Override
-		public long getItemId(int position) {
-			return 0;
-		}
-
-	};
 }

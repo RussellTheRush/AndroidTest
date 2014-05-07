@@ -69,12 +69,26 @@ public class PPListView extends ListView implements OnScrollListener {
 	private View mCurTitleView;
 	private boolean mIsFirstRefreshing = true;
 	private boolean mShouldShowTopTitle;
-	private ListAdapter mAdapter;
+	private PinnedSectionedHeaderAdapter mAdapter;
 	private Handler mHandler = new Handler();
 	private int mCurTitleOffset;
 	private int mWidthMode;
 	private int mHeightMode;
     private boolean mTitleViewDisapear = false;
+	private int mCurrentSection;
+    
+    public static interface PinnedSectionedHeaderAdapter {
+        public boolean isSectionHeader(int position);
+
+        public int getSectionForPosition(int position);
+
+        public View getSectionHeaderView(int section, View convertView, ViewGroup parent);
+
+        public int getSectionHeaderViewType(int section);
+
+        public int getCount();
+
+    }
 
 	public interface OnRefreshListener {
 		public void onRefresh();
@@ -109,7 +123,7 @@ public class PPListView extends ListView implements OnScrollListener {
 	
 	@Override
 	public void setAdapter(ListAdapter adapter) {
-		mAdapter = adapter;
+		mAdapter = (PinnedSectionedHeaderAdapter)adapter;
 		super.setAdapter(adapter);
 	}
 
@@ -149,21 +163,21 @@ public class PPListView extends ListView implements OnScrollListener {
 				R.layout.list_load_more, null);
 		addFooterView(mFooterView);
 	}
-
+	
 	private void destroyFooterView() {
 		removeFooterView(mFooterView);
 		mFooterView = null;
 	}
-
+	
 	@Override
 	protected void onScrollChanged(int l, int t, int oldl, int oldt) {
 		super.onScrollChanged(l, t, oldl, oldt);
 	}
-
+	
 	public void setPreloadFactor(int preloadFactor) {
 		mPreloadFactor = preloadFactor;
 	}
-
+	
 	public void setRefreshEnable(boolean bRefreshEnable) {
 		mRefreshEnable = bRefreshEnable;
 
@@ -255,29 +269,58 @@ public class PPListView extends ListView implements OnScrollListener {
 			return;
 		}
 		
-		mCurTitleOffset = 0;
+        int section = mAdapter.getSectionForPosition(firstVisibleItem);
+        int viewType = mAdapter.getSectionHeaderViewType(section);
+        mCurTitleView = getSectionHeaderView(section, mCurTitleView);
+        ensureTitleViewLayout();
+        
         firstVisibleItem -= getHeaderViewsCount();
+        mCurTitleOffset = 0;
 
-		for (int i = firstVisibleItem; i < firstVisibleItem + visibleItemCount; i++) {
-			if (mAdapter.getItemViewType(i) == ITEM_TYPE_TITLE) {
-				View titleView = getChildAt(i - firstVisibleItem);	
-				int top = titleView.getTop();
-				int height = mCurTitleView == null ? titleView.getMeasuredHeight() : mCurTitleView.getMeasuredHeight();
-				if (top <= height && top > 0) {
-                    Log.w("RRR", "top: " + top + " height: " + height);
-					View oldView = mCurTitleView;
-					mCurTitleView = mAdapter.getView(i, oldView, this);
-					if (mCurTitleView != oldView) {
-						ensureTitleViewLayout();
-					}
-					mCurTitleOffset = top - height;
-				}
-			}
-		}
+        for (int i = firstVisibleItem; i < firstVisibleItem + visibleItemCount; i++) {
+            if (mAdapter.isSectionHeader(i)) {
+                View header = getChildAt(i - firstVisibleItem);
+                int headerTop = header.getTop();
+                int pinnedHeaderHeight = mCurTitleView.getMeasuredHeight();
+                
+                if (pinnedHeaderHeight >= headerTop && headerTop > 0) {
+                	mCurTitleOffset = headerTop - header.getHeight();
+                }
+            }
+        }
 		
+//		mCurTitleOffset = 0;
+//        firstVisibleItem -= getHeaderViewsCount();
+//
+//		for (int i = firstVisibleItem; i < firstVisibleItem + visibleItemCount; i++) {
+//			if () {
+//				View titleView = getChildAt(i - firstVisibleItem);	
+//				int top = titleView.getTop();
+//				int height = mCurTitleView == null ? titleView.getMeasuredHeight() : mCurTitleView.getMeasuredHeight();
+//				if (top <= height && top > 0) {
+//                    Log.w("RRR", "top: " + top + " height: " + height);
+//					View oldView = mCurTitleView;
+//					mCurTitleView = mAdapter.getView(i, oldView, this);
+//					if (mCurTitleView != oldView) {
+//						ensureTitleViewLayout();
+//					}
+//					mCurTitleOffset = top - height;
+//				}
+//			}
+//		}
 		invalidate();
-		
 	}
+	
+    private View getSectionHeaderView(int section, View oldView) {
+        boolean shouldLayout = section != mCurrentSection || oldView == null;
+
+        View view = mAdapter.getSectionHeaderView(section, oldView, this);
+        if (shouldLayout) {
+            // a new section, thus a new header. We should lay it out again
+            mCurrentSection = section;
+        }
+        return view;
+    }
 	
     private void ensureTitleViewLayout() {
         if (mCurTitleView.isLayoutRequested()) {
