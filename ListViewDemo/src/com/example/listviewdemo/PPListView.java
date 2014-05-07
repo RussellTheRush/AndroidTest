@@ -67,8 +67,6 @@ public class PPListView extends ListView implements OnScrollListener {
 	private boolean mRefreshEnable;
 	private int mPreloadFactor = -1;
 	private View mCurTitleView;
-	private RelativeLayout mLayoutSplash;
-	private RelativeLayout mLayoutContent;
 	private boolean mIsFirstRefreshing = true;
 	private boolean mShouldShowTopTitle;
 	private ListAdapter mAdapter;
@@ -107,27 +105,6 @@ public class PPListView extends ListView implements OnScrollListener {
 	public void setShowTopTitle(boolean show) {
 		mShouldShowTopTitle = show;
 	}
-	
-//	private boolean setuped = false;
-//	private void setupTitleView() {
-//		if (!setuped) {
-//			setuped = true;
-//			LinearLayout container = (LinearLayout)this.getParent().getParent();
-//			mLayoutContent = (RelativeLayout)container.findViewById(R.id.layout_content);
-//			mLayoutSplash = (RelativeLayout)container.findViewById(R.id.layout_splash);
-//			mTitleView = mLayoutContent.getChildAt(1);
-////			ViewGroup.LayoutParams params = mTitleView.getLayoutParams();
-////			params.height = 200;
-////			mTitleView.setLayoutParams(params);
-////			mTitleView.setTop(10);
-////			mTitleView.setBottom(70);
-//			//showFirstRefresh();
-////			mTitleView = mInflater.inflate(R.layout.list_item_title, null);
-////			
-////			
-////			mLayoutContent.addView(mTitleView);
-//		}
-//	}
 	
 	@Override
 	public void setAdapter(ListAdapter adapter) {
@@ -267,27 +244,6 @@ public class PPListView extends ListView implements OnScrollListener {
 		mHeightMode = MeasureSpec.getMode(heightMeasureSpec);
 	}
 
-	//	@Override
-	//	protected void measureChildren(int widthMeasureSpec,
-	//			int heightMeasureSpec) {
-	//		Log.w("RRR", "measureChildren");
-	//		super.measureChildren(widthMeasureSpec, heightMeasureSpec);
-	//	}
-	//
-	//	@Override
-	//	protected void measureChild(View child, int parentWidthMeasureSpec,
-	//			int parentHeightMeasureSpec) {
-	//		Log.w("RRR", "measureChild");
-	//		super.measureChild(child, parentWidthMeasureSpec,
-	//				parentHeightMeasureSpec);
-	//	}
-	//
-	//	@Override
-	//	protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-	//		Log.w("RRR", "onMeasure");
-	//		super.onMeasure(widthMeasureSpec, heightMeasureSpec);
-	//	}
-
 	@Override
 	public void onScroll(AbsListView view, int firstVisibleItem,
 			int visibleItemCount, int totalItemCount) {
@@ -310,12 +266,15 @@ public class PPListView extends ListView implements OnScrollListener {
 		}
 		
 		mCurTitleOffset = 0;
+        firstVisibleItem -= getHeaderViewsCount();
+
 		for (int i = firstVisibleItem; i < firstVisibleItem + visibleItemCount; i++) {
 			if (mAdapter.getItemViewType(i) == ITEM_TYPE_TITLE) {
 				View titleView = getChildAt(i - firstVisibleItem);	
 				int top = titleView.getTop();
 				int height = mCurTitleView == null ? titleView.getMeasuredHeight() : mCurTitleView.getMeasuredHeight();
 				if (top <= height && top > 0) {
+                    Log.w("RRR", "top: " + top + " height: " + height);
 					View oldView = mCurTitleView;
 					mCurTitleView = mAdapter.getView(i, oldView, this);
 					if (mCurTitleView != oldView) {
