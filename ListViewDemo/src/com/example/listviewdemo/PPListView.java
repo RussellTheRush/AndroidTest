@@ -1,11 +1,13 @@
 package com.example.listviewdemo;
 
 import java.util.Date;
+
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.ValueAnimator;
 import android.animation.ValueAnimator.AnimatorUpdateListener;
 import android.content.Context;
+import android.graphics.Canvas;
 import android.os.Handler;
 import android.util.AttributeSet;
 import android.util.Log;
@@ -22,6 +24,7 @@ import android.widget.AbsListView;
 import android.widget.AbsListView.OnScrollListener;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
@@ -63,12 +66,16 @@ public class PPListView extends ListView implements OnScrollListener {
 	private boolean mIsRefreshable;
 	private boolean mRefreshEnable;
 	private int mPreloadFactor = -1;
-	private View mTitleView;
+	private View mCurTitleView;
 	private RelativeLayout mLayoutSplash;
-	private LinearLayout mLayoutContent;
-	private boolean mTitleChanging = false;
-
+	private RelativeLayout mLayoutContent;
+	private boolean mIsFirstRefreshing = true;
+	private boolean mShouldShowTopTitle;
+	private ListAdapter mAdapter;
 	private Handler mHandler = new Handler();
+	private int mCurTitleOffset;
+	private int mWidthMode;
+	private int mHeightMode;
 
 	public interface OnRefreshListener {
 		public void onRefresh();
@@ -91,26 +98,52 @@ public class PPListView extends ListView implements OnScrollListener {
 
 		setOnScrollListener(this);
 
-		setLoadMoreEnable(false);
+		setLoadMoreEnable(true);
 		setRefreshEnable(true);
 
 		invalidate();
 	}
-	private boolean setuped = false;
-	private void setup() {
-		if (!setuped) {
-			setuped = true;
-			LinearLayout container = (LinearLayout)this.getParent().getParent();
-			mLayoutContent = (LinearLayout)container.findViewById(R.id.layout_content);
-			mLayoutSplash = (RelativeLayout)container.findViewById(R.id.layout_splash);
-			showFirstRefresh();
-			mTitleView = container.findViewById(R.id.title);
-		}
+	
+	public void setShowTopTitle(boolean show) {
+		mShouldShowTopTitle = show;
+	}
+	
+//	private boolean setuped = false;
+//	private void setupTitleView() {
+//		if (!setuped) {
+//			setuped = true;
+//			LinearLayout container = (LinearLayout)this.getParent().getParent();
+//			mLayoutContent = (RelativeLayout)container.findViewById(R.id.layout_content);
+//			mLayoutSplash = (RelativeLayout)container.findViewById(R.id.layout_splash);
+//			mTitleView = mLayoutContent.getChildAt(1);
+////			ViewGroup.LayoutParams params = mTitleView.getLayoutParams();
+////			params.height = 200;
+////			mTitleView.setLayoutParams(params);
+////			mTitleView.setTop(10);
+////			mTitleView.setBottom(70);
+//			//showFirstRefresh();
+////			mTitleView = mInflater.inflate(R.layout.list_item_title, null);
+////			
+////			
+////			mLayoutContent.addView(mTitleView);
+//		}
+//	}
+	
+	@Override
+	public void setAdapter(ListAdapter adapter) {
+		mAdapter = adapter;
+		super.setAdapter(adapter);
 	}
 
 	private void showFirstRefresh() {
+		mIsFirstRefreshing = true;
 		mLayoutContent.setVisibility(GONE);
 		mLayoutSplash.setVisibility(VISIBLE);
+	}
+	
+	private void showListView() {
+		mLayoutSplash.setVisibility(GONE);
+		mLayoutContent.setVisibility(VISIBLE);
 	}
 
 	private void setupHeaderView() {
@@ -226,6 +259,13 @@ public class PPListView extends ListView implements OnScrollListener {
 			refreshListener.onRefresh();
 		}
 	}
+	
+	@Override
+	protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+		super.onMeasure(widthMeasureSpec, heightMeasureSpec);
+		mWidthMode = MeasureSpec.getMode(widthMeasureSpec);
+		mHeightMode = MeasureSpec.getMode(heightMeasureSpec);
+	}
 
 	//	@Override
 	//	protected void measureChildren(int widthMeasureSpec,
@@ -251,7 +291,6 @@ public class PPListView extends ListView implements OnScrollListener {
 	@Override
 	public void onScroll(AbsListView view, int firstVisibleItem,
 			int visibleItemCount, int totalItemCount) {
-		setup();
 		if (firstVisibleItem == 0 && mRefreshListener != null) {
 			mIsRefreshable = true;
 		} else {
@@ -259,46 +298,92 @@ public class PPListView extends ListView implements OnScrollListener {
 		}
 		if (mState == DONE
 				&& mPreloadFactor != -1
-				&& mLoadMoreEnable
+				&& mLoadMoreEnable 
 				&& getLastVisiblePosition() + getHeaderViewsCount() >= getCount()
 				- mPreloadFactor) {
 			onLvLoadMore();
 		}
-		if (getAdapter() != null && getAdapter().getItemViewType(getFirstVisiblePosition()) == ITEM_TYPE_TITLE) {
-			View titleView = getChildAt(0);
-			if (titleView != null) {
-				String tag = titleView == null ? "null" : (String)titleView.getTag();
+		
+		
+		if (!mShouldShowTopTitle || mAdapter == null || mAdapter.getCount() == 0 || (firstVisibleItem < getHeaderViewsCount())) {
+			return;
+		}
+		
+		mCurTitleOffset = 0;
+		for (int i = firstVisibleItem; i < firstVisibleItem + visibleItemCount; i++) {
+			if (mAdapter.getItemViewType(i) == ITEM_TYPE_TITLE) {
+				View titleView = getChildAt(i - firstVisibleItem);	
 				int top = titleView.getTop();
-				if (top < 0) {
-
-					Log.w("RRR", "title getFirstVisiblePosition(): " + getFirstVisiblePosition() + " getHeaderViewsCount(): " + getHeaderViewsCount() 
-							+ " tag: " + tag
-							+ " top:" + top);
+				int height = mCurTitleView == null ? titleView.getMeasuredHeight() : mCurTitleView.getMeasuredHeight();
+				if (top <= height && top > 0) {
+					View oldView = mCurTitleView;
+					mCurTitleView = mAdapter.getView(i, oldView, this);
+					if (mCurTitleView != oldView) {
+						ensureTitleViewLayout();
+					}
+					mCurTitleOffset = top - height;
 				}
 			}
 		}
+		
+		invalidate();
+		
 	}
+	
+    private void ensureTitleViewLayout() {
+        if (mCurTitleView.isLayoutRequested()) {
+            int widthSpec = MeasureSpec.makeMeasureSpec(getMeasuredWidth(), mWidthMode);
+            
+            int heightSpec;
+            ViewGroup.LayoutParams layoutParams = mCurTitleView.getLayoutParams();
+            if (layoutParams != null && layoutParams.height > 0) {
+                heightSpec = MeasureSpec.makeMeasureSpec(layoutParams.height, MeasureSpec.EXACTLY);
+            } else {
+                heightSpec = MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED);
+            }
+            mCurTitleView.measure(widthSpec, heightSpec);
+            mCurTitleView.layout(0, 0, mCurTitleView.getMeasuredWidth(), mCurTitleView.getMeasuredHeight());
+        }
+    }
+	
+	@Override
+	protected void dispatchDraw(Canvas canvas) {
+		super.dispatchDraw(canvas);
+		if (mCurTitleView == null || !mShouldShowTopTitle || mAdapter == null) {
+			return;
+		}
+		int saveCount = canvas.save();
+		canvas.translate(0, mCurTitleOffset);
+		canvas.clipRect(0, 0, getWidth(), mCurTitleView.getMeasuredHeight());
+		mCurTitleView.draw(canvas);
+		canvas.restoreToCount(saveCount);
+	}
+	
 
 	@Override
 	public void onScrollStateChanged(AbsListView view, int scrollState) {
 		if (scrollState == OnScrollListener.SCROLL_STATE_IDLE
-				&& mState == DONE
+				&& mState == DONE 
 				&& getLastVisiblePosition() == getCount() - getHeaderViewsCount()) {
 			onLvLoadMore();
 		}
 	}
 
 	public void onRefreshSuccess() {
+		if (mIsFirstRefreshing) {
+			//showListView();
+			mIsFirstRefreshing = false;
+		}
 		if (mRefreshEnable) {
 			mState = DONE;
 			mLastInfoView.setText("最后更新时间:" + new Date().toLocaleString());
 			changeHeaderViewByState();
 		}
-		if (mLoadMoreEnable && 
-				(getLastVisiblePosition() == getCount() - getHeaderViewsCount()
-				|| getLastVisiblePosition() == 0 - getHeaderViewsCount())) {
-			onLvLoadMore();
-		}
+//		if (mLoadMoreEnable && 
+//				(getLastVisiblePosition() == getCount() - getHeaderViewsCount()
+//				|| getLastVisiblePosition() == 0 - getHeaderViewsCount())) {
+//			onLvLoadMore();
+//		}
 	}
 
 	@Override
@@ -491,7 +576,7 @@ public class PPListView extends ListView implements OnScrollListener {
 		if (mLoadMoreEnable) {
 			mState = LOADING_MORE;
 
-			if (mRefreshListener != null) {
+			if (mRefreshListener != null ) {
 				mRefreshListener.onLoadMore();
 			}
 		}
